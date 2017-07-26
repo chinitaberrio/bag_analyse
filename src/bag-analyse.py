@@ -53,6 +53,18 @@ class BagDataType:
                 cumulative_y += math.sin(cumulative_theta) * v * dt
             yield ([t, cumulative_x, cumulative_y, cumulative_theta, yaw_rate, v])
 
+    def add_KML_path(self, kml, label, east_base, east_vector, north_base, north_vector, colour):
+        ls = kml.newlinestring(name=str(label))
+        ls.style.linestyle.width = 4
+
+        path = []
+        for east, north in zip(east_vector, north_vector):
+            lat, lon = utm.to_latlon(east + east_base, north + north_base, zone, letter)
+            path.append((lon, lat))
+
+        ls.coords = path
+        ls.style.linestyle.color = colour
+
 
 # IMU has an additional field which is filled in with the latest speed measurement
 #  This enables the recalculation of odometry information using yaw and speed
@@ -197,12 +209,6 @@ for topic, msg, t in bag.read_messages():
     elif topic in steering.topic_list and msg.name[0] == 'front_left_wheel':
         velocity.new_message(topic, msg, t)
 
-    """elif topic == '/zio/joint_states':
-        if (msg.name[0] == 'left_steering'):
-            steering['steering'].append([t.to_sec(), msg.position[2]])
-        elif (msg.name[0] == 'front_left_wheel'):
-            steering['velocity'].append([t.to_sec(), msg.velocity[0], msg.velocity[1], msg.velocity[2], msg.velocity[3]])
-    """
 
 bag.close()
 
@@ -252,9 +258,9 @@ plt.plot(imu.data['/gy80/imu/raw'][:,0], imu.data['/gy80/imu/raw'][:,10], 'r')
 plt.legend(['vn100', 'gy80'])
 
 
-# plot the bridge data
+
 fig = plt.figure()
-fig.suptitle('ROSbag database sensor data plot against position')
+fig.suptitle('Plot filter odometry output in 3d')
 ax = fig.add_subplot(111, projection='3d')
 plt.hold(True)
 plt.plot(odometry.data['/localisation/odometry/filtered'][:, 1],
@@ -262,9 +268,9 @@ plt.plot(odometry.data['/localisation/odometry/filtered'][:, 1],
          odometry.data['/localisation/odometry/filtered'][:, 3])
 
 
-# plot the bridge data
+
 fig = plt.figure()
-fig.suptitle('GNSS')
+fig.suptitle('Plot GNSS output in 3d')
 ax = fig.add_subplot(111, projection='3d')
 plt.hold(True)
 plt.plot(gnss.data['/gnss/extended_fix'][:, 2],
@@ -273,19 +279,30 @@ plt.plot(gnss.data['/gnss/extended_fix'][:, 2],
 
 
 
+# output the paths to KML
 east_base, north_base, zone, letter = utm.from_latlon(-33.889565,151.1933352)
 
 kml = simplekml.Kml()
-ls = kml.newlinestring(name=str('path'))
-ls.style.linestyle.width = 4
 
-path = []
-for east, north in zip (odometry.data['/localisation/odometry/filtered'][:, 2], odometry.data['/localisation/odometry/filtered'][:, 1]):
-    lat, lon = utm.to_latlon(east + east_base, north + north_base, zone, letter)
-    path.append((lon,lat))
+odometry.add_KML_path(kml, 'filtered',
+             east_base, odometry.data['/localisation/odometry/filtered'][:, 2],
+             north_base, odometry.data['/localisation/odometry/filtered'][:, 1],
+             simplekml.Color.green)
 
-ls.coords = path
-ls.style.linestyle.color = simplekml.Color.green
+odometry.add_KML_path(kml, 'gy80',
+             east_base, odometry.data['/gy80/odometry'][:, 1],
+             north_base, odometry.data['/gy80/odometry'][:, 2],
+             simplekml.Color.red)
+
+imu.add_KML_path(kml, 'vn100 gyro',
+             east_base, imu.gyro_path['/vn100/imu'][:,1],
+             north_base, imu.gyro_path['/vn100/imu'][:,2],
+             simplekml.Color.yellow)
+
+imu.add_KML_path(kml, 'vn100 attitude',
+             east_base, imu.attitude_path['/vn100/imu'][:,1],
+             north_base, imu.attitude_path['/vn100/imu'][:,2],
+             simplekml.Color.blue)
 
 kml.save('/home/stew/test.kml')
 
