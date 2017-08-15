@@ -1,16 +1,18 @@
+import csv
 import tf
 import utm
 import rosbag
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-import simplekml
 
 
 import numpy as np
 import pandas as pd
 
 import math
+from BagDataType import *
+from DataContainer import DataContainer
 
 bag_file = '/home/stew/data/EV/20170627-dual-imu/trip-from-mq_2017-06-27-12-30-30.bag'  # 4.1
 
@@ -19,364 +21,335 @@ bag_file = '/home/stew/data/EV/20170627-dual-imu/trip-from-mq_2017-06-27-12-30-3
 bag_file = '/home/stew/data/hugh_aaron_imu_tests/1-3.bag'
 bag_file = '/home/stew/data/tmp/ekf3.bag'
 
-bag_file = '/home/stew/data/EV/vectornav/filtered_2017-07-25-13-49-29.bag'
-
+bag_file = '/home/stew/data/EV/vectornav/to-carpark-roof_2017-07-25-13-26-56.bag'
+bag_file = '/home/stew/data/EV/vectornav/new/out2.bag'
 
+bag_file = '/home/stew/data/EV/from-rcos/roundabouts_2017-07-28-15-13-00.bag'
 
-print ("starting read of " + bag_file)
-bag = rosbag.Bag(bag_file)
-
-
-class BagDataType:
-    def __init__(self, topic_list):
-        self.topic_list = topic_list
-        self.data = dict()
-        for topic in topic_list:
-            self.data[topic] = []
-
-    def convert_numpy(self):
-        for topic in self.topic_list:
-            self.data[topic] = np.array(self.data[topic])
-
-    def calculate_odometry(self, odometry, initial_x = 0., initial_y = 0., initial_theta = 0., stationary_constraint=False):
-        print odometry.shape
-        deltas = np.diff(odometry[:, 0])
-        cumulative_x = initial_x
-        cumulative_y = initial_y
-        cumulative_theta = initial_theta
-
-        for (t, x, y, z, roll, pitch, yaw, v, yaw_rate), dt in zip(odometry[1:, :], deltas):
-            if not stationary_constraint or v > 0.:
-                dt = 0.1
-                cumulative_theta += dt * yaw_rate
-                cumulative_x += math.cos(cumulative_theta) * v * dt
-                cumulative_y += math.sin(cumulative_theta) * v * dt
-            yield ([t, cumulative_x, cumulative_y, cumulative_theta, yaw_rate, v])
-
-    def add_KML_path(self, kml, label, east_base, east_vector, north_base, north_vector, colour):
-        ls = kml.newlinestring(name=str(label))
-        ls.style.linestyle.width = 4
+bag_file = '/home/stew/data/EV/rtk-tests/to-carpark-roof_2017-08-01-13-57-17.bag'
+bag_file = '/home/stew/data/EV/rtk-tests/to-carpark-roof_2017-08-02-09-56-57.bag'
+#bag_file = '/home/stew/data/EV/rtk-tests/carpark-roof_2017-08-02-11-00-22.bag'
+#bag_file = '/home/stew/data/EV/rtk-tests/rtk-rooftop-test_2017-08-01-15-46-12.bag'
 
-        path = []
-        for east, north in zip(east_vector, north_vector):
-            lat, lon = utm.to_latlon(east + east_base, north + north_base, zone, letter)
-            path.append((lon, lat))
+bag_file = '/home/stew/data/EV/gps-gating/localise_test_2017-08-04-13-52-23.bag'
 
-        ls.coords = path
-        ls.style.linestyle.color = colour
 
+bag_file = '/home/stew/data/EV/gnss-vectornav-test/ublox-vectornav-test_2017-08-10-14-59-01.bag'
 
-# IMU has an additional field which is filled in with the latest speed measurement
-#  This enables the recalculation of odometry information using yaw and speed
-class IMU(BagDataType):
-    def new_message(self, topic, msg, t, current_speed):
-        euler = tf.transformations.euler_from_quaternion(
-            [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w])
+bag_file = '/home/stew/data/EV/gnss-vectornav-test/test.bag'
 
-        self.data[topic].append([t.to_sec(),
-                                 msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w,
-                                 euler[0], euler[1], euler[2],
-                                 msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z,
-                                 current_speed])
+bag_file = '/home/stew/data/EV/gnss-vectornav-test/filtered-4.bag'
 
-    def recalculate_odometry_2d(self):
-        # recompute the position from the imu measurements (yaw and attitude)
-        self.gyro_path = dict()
-        self.attitude_path = dict()
 
-        for key, source in self.data.iteritems():
+container = DataContainer(rosbag.Bag(bag_file),
+                          steering=Steering([]),
+                          velocity=Velocity([]),
+                          imu=IMU(['/vn100/imu']),
+                          odometry=Odometry(['/odometry/gps', '/odometry/filtered', '/zio/odometry/rear']),
+                          gnss=GNSS(['/ublox_gps/fix', '/gps/filtered']))
 
-            if len(source) == 0:
-                continue
+#odometry = Odometry(['/localisation_test/odometry/gps', '/zio/odometry/front', '/zio/odometry/rear', '/localisation_test/odometry/gps'])
+#steering = Steering(['/zio/joint_states'])
+#velocity = Velocity(['/zio/joint_states'])
 
-            self.gyro_path[key] = []
-            for new_sample in self.calculate_imu_odometry_gyro(source):
-                self.gyro_path[key].append(new_sample)
+plot_velocity = True
+plot_yaw_rate = True
+plot_yaw = True
+plot_position = True
 
-            self.attitude_path[key] = []
-            for new_sample in self.calculate_imu_odometry_attutide(source):
-                self.attitude_path[key].append(new_sample)
+# outputs to KML only if this variable is not an empty string
+output_KML_file = '/home/stew/paths.kml'
 
-            self.gyro_path[key] = np.array(self.gyro_path[key])
-            self.attitude_path[key] = np.array(self.attitude_path[key])
+FIXED_IMU_TIMING = 0.01
 
+# plot velocity information
+if plot_velocity:
+    plt.figure()
+    plt.title("Speed from various sources")
+    plt.xlabel("time (s)")
+    plt.ylabel("speed (m/s)")
 
-    def calculate_imu_odometry_gyro(self, imu):
-        deltas = np.diff(imu[:,0])
-        cumulative_x = 0.
-        cumulative_y = 0.
-        cumulative_theta = 0.
+    legend = []
 
-        for (t, ox, oy, oz, ow, roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate, v), dt in zip(imu[1:,:], deltas):
-            dt = 0.01
-            cumulative_theta += dt * yaw_rate
-            cumulative_x += math.cos(cumulative_theta) * v * dt
-            cumulative_y += math.sin(cumulative_theta) * v * dt
-            yield ([t, cumulative_x, cumulative_y, cumulative_theta, yaw_rate, v])
+    for topic in container.odometry.topic_list:
+        if len(container.odometry.data[topic]) > 0:
+            plt.plot(container.odometry.data[topic][:, 0],
+                     container.odometry.data[topic][:, 7])
+            legend.append(topic)
 
+    plt.legend(legend)
 
-    def calculate_imu_odometry_attutide(self, imu):
-        deltas = np.diff(imu[:, 0])
-        cumulative_x = 0.
-        cumulative_y = 0.
-        cumulative_theta = 0.
+# plot yaw rate information
+if plot_yaw_rate:
+    plt.figure()
+    plt.title("Yaw rate from various sources")
+    plt.xlabel("time (s)")
+    plt.ylabel("angular velocity (rad/s)")
 
-        for (t, ox, oy, oz, ow, roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate, v), dt in zip(imu[1:, :], deltas):
-            dt = 0.01
-            cumulative_x += math.cos(yaw) * v * dt
-            cumulative_y += math.sin(yaw) * v * dt
-            yield ([t, cumulative_x, cumulative_y, yaw, yaw_rate, v])
+    legend = []
 
+    for topic in container.odometry.topic_list:
+        if len(container.odometry.data[topic]) > 0:
+            plt.plot(container.odometry.data[topic][:, 0],
+                     container.odometry.data[topic][:, 8])
+            legend.append(topic)
 
-class Odometry(BagDataType):
-    def new_message(self, topic, msg, t):
-        euler = tf.transformations.euler_from_quaternion(
-            [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z,
-             msg.pose.pose.orientation.w])
+    for topic in container.imu.topic_list:
+        if len(container.imu.data[topic]) > 0:
+            plt.plot(container.imu.data[topic][:, 0],
+                     container.imu.data[topic][:, 10])
+            legend.append(topic)
 
-        self.data[topic].append([t.to_sec(),
-                                 msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z,
-                                 euler[0], euler[1], euler[2],
-                                 msg.twist.twist.linear.x,
-                                 msg.twist.twist.angular.z])
+    plt.legend(legend)
 
-    def recalculate_odometry_2d(self):
-        # recompute the position from the odometry rate measurements (yaw and velocity)
-        self.recalculated_data = dict()
 
-        for key, source in self.data.iteritems():
+# plot yaw information
+if plot_yaw:
+    plt.figure()
+    plt.suptitle("Yaw from various sources")
 
-            if len(source) == 0:
-                continue
+    plt.subplot(311)
+    plt.hold(True)
+    plt.xlabel("time (s)")
+    plt.ylabel("roll angle (rad)")
 
-            self.recalculated_data[key] = []
-            for new_sample in self.calculate_odometry(source):
-                self.recalculated_data[key].append(new_sample)
+    plt.subplot(312)
+    plt.hold(True)
+    plt.xlabel("time (s)")
+    plt.ylabel("pitch angle (rad)")
 
-            self.recalculated_data[key] = np.array(self.recalculated_data[key])
+    plt.subplot(313)
+    plt.hold(True)
+    plt.xlabel("time (s)")
+    plt.ylabel("yaw angle (rad)")
 
+    legend = []
 
+    for topic in container.odometry.topic_list:
+        if len(container.odometry.data[topic]) > 0:
+            plt.subplot(311)
+            plt.plot(container.odometry.data[topic][:, 0],
+                     np.unwrap(container.odometry.data[topic][:, 4]))
+
+            plt.subplot(312)
+            plt.plot(container.odometry.data[topic][:, 0],
+                     np.unwrap(container.odometry.data[topic][:, 5]))
 
-class GNSS(BagDataType):
-    def new_message(self, topic, msg, t):
-        east, north, zone, letter = utm.from_latlon(msg.latitude, msg.longitude)
-        self.data[topic].append([t.to_sec(), msg.speed, east, north, msg.altitude])
+            plt.subplot(313)
+            plt.plot(container.odometry.data[topic][:, 0],
+                     np.unwrap(container.odometry.data[topic][:, 6]))
 
+            legend.append(topic)
 
-class Steering(BagDataType):
-    def new_message(self, topic, msg, t):
-        self.data[topic].append([t.to_sec(), msg.position[2]])
+    for topic in container.imu.topic_list:
+        if len(container.imu.data[topic]) > 0:
+            plt.subplot(311)
+            plt.plot(container.imu.data[topic][:, 0],
+                     np.cumsum(container.imu.data[topic][:, 8] * FIXED_IMU_TIMING))
+            plt.plot(container.imu.data[topic][:, 0],
+                     np.unwrap(container.imu.data[topic][:, 5]), 'g')
 
+            plt.subplot(312)
+            plt.plot(container.imu.data[topic][:, 0],
+                     np.cumsum(container.imu.data[topic][:, 9] * FIXED_IMU_TIMING))
+            plt.plot(container.imu.data[topic][:, 0],
+                     np.unwrap(container.imu.data[topic][:, 6]), 'g')
 
-class Velocity(BagDataType):
-    def new_message(self, topic, msg, t):
-        self.data[topic].append([t.to_sec(), msg.velocity[0], msg.velocity[1], msg.velocity[2], msg.velocity[3]])
+            plt.subplot(313)
+            plt.plot(container.imu.data[topic][:, 0],
+                     np.cumsum(container.imu.data[topic][:, 10] * FIXED_IMU_TIMING))
+            plt.plot(container.imu.data[topic][:, 0],
+                     np.unwrap(container.imu.data[topic][:, 7]), 'g')
 
+            legend.append(topic+"-gyro")
+            legend.append(topic+"-attitude")
 
+    for topic in container.gnss.topic_list:
+        if len(container.gnss.data[topic]) > 0:
+            plt.subplot(313)
+            plt.plot(container.gnss.data[topic][1:, 0],
+                     np.unwrap(container.gnss.data[topic][1:, 5]))
 
-imu = IMU(['/gy80/imu/raw', '/vn100/imu'])
-odometry = Odometry(['/localisation/odometry/filtered', '/zio/odometry/front', '/zio/odometry/rear', '/gy80/imu/raw', '/gy80/odometry', '/imu'])
-gnss = GNSS(['/gnss/extended_fix'])
-steering = Steering(['/zio/joint_states'])
-velocity = Velocity(['/zio/joint_states'])
+            legend.append(topic)
 
-current_speed = 0.
-target_speed_source = '/zio/odometry/rear'
+    plt.legend(legend)
 
-for topic, msg, t in bag.read_messages():
 
-    # pick only the times where the vehicle was moving GOING OUT
-    #if (t.to_sec() < 30+1.49678753e9 or t.to_sec() > 75+1.49678753e9):
-    #    continue
 
-    if topic == target_speed_source:
-        current_speed = msg.twist.twist.linear.x
 
-    if topic in gnss.topic_list:
-        gnss.new_message(topic, msg, t)
+# plot position information
+if plot_position:
+    plt.figure()
+    plt.suptitle("Position from various sources")
 
-    elif topic in imu.topic_list:
-        imu.new_message(topic, msg, t, current_speed)
+    plt.subplot(311)
+    plt.hold(True)
+    plt.xlabel("east")
+    plt.ylabel("north")
 
-    elif topic in odometry.topic_list:
-        odometry.new_message(topic, msg, t)
+    plt.subplot(312)
+    plt.hold(True)
+    plt.xlabel("east")
+    plt.ylabel("north")
 
-    # the steering wheel messages name starts with 'left_steering'
-    elif topic in steering.topic_list and msg.name[0] == 'left_steering':
-        steering.new_message(topic, msg, t)
+    plt.subplot(313)
+    plt.hold(True)
+    plt.xlabel("GNSS east")
+    plt.ylabel("GNSS north")
 
-    # the wheel velocity messages name starts with 'front_left_wheel'
-    elif topic in steering.topic_list and msg.name[0] == 'front_left_wheel':
-        velocity.new_message(topic, msg, t)
+    legend = []
+    for topic in container.odometry.topic_list:
+        if len(container.odometry.data[topic]) > 0:
+            plt.subplot(311)
+            plt.plot(container.odometry.data[topic][:, 2],
+                     container.odometry.data[topic][:, 1] * -1.)
 
+            legend.append(topic)
 
-bag.close()
+    if len(legend) > 0:
+        plt.legend(legend)
 
+    legend = []
+    for topic in container.imu.topic_list:
+        if len(container.imu.data[topic]) > 0:
+            plt.subplot(312)
+            plt.plot(container.imu.gyro_path[topic][:, 2],
+                     container.imu.gyro_path[topic][:, 1] * -1.)
 
-imu.convert_numpy()
-odometry.convert_numpy()
-gnss.convert_numpy()
+            plt.plot(container.imu.attitude_path[topic][:, 2],
+                     container.imu.attitude_path[topic][:, 1] * -1.)
 
-odometry.recalculate_odometry_2d()
-imu.recalculate_odometry_2d()
+            legend.append((topic+'-gyro'))
+            legend.append((topic+'-attitude'))
 
-plt.figure()
-plt.title("yaw rate")
-plt.plot(odometry.data['/localisation/odometry/filtered'][:, 0],
-         odometry.data['/localisation/odometry/filtered'][:, 8], 'r')
-plt.plot(odometry.data['/gy80/odometry'][:, 0],
-         odometry.data['/gy80/odometry'][:, 8], 'g')
+    if len(legend) > 0:
+        plt.legend(legend)
 
-plt.figure()
-plt.title("velocity")
-plt.plot(odometry.data['/localisation/odometry/filtered'][:, 0],
-         odometry.data['/localisation/odometry/filtered'][:, 7], 'r-')
-plt.plot(odometry.data['/gy80/odometry'][:, 0],
-         odometry.data['/gy80/odometry'][:, 7], 'g-')
+    legend = []
+    for topic in container.gnss.topic_list:
+        if len(container.gnss.data[topic]) > 0:
+            plt.subplot(313)
+            plt.plot(container.gnss.data[topic][:, 2],
+                     container.gnss.data[topic][:, 3])
 
+            legend.append(topic)
 
-plt.figure()
-plt.title("IMU yaw")
+    if len(legend) > 0:
+        plt.legend(legend)
 
-plt.hold(True)
 
-vector_nav_fixed_delta_time = 0.01
-plt.plot(imu.data['/vn100/imu'][:,0], np.cumsum(imu.data['/vn100/imu'][:,10] * vector_nav_fixed_delta_time), 'b')
-plt.plot(imu.data['/vn100/imu'][:,0], np.unwrap(imu.data['/vn100/imu'][:,7]), 'g')
-plt.legend(['vectornav from gyro', 'vectornav from attitude'])
 
 
+if len(output_KML_file) > 0:
 
-plt.figure()
-plt.title("IMU yaw rate")
+    container.output_KML_path(output_KML_file)
 
-plt.hold(True)
 
-vector_nav_fixed_delta_time = 0.01
-plt.plot(imu.data['/vn100/imu'][:,0], imu.data['/vn100/imu'][:,10], 'b')
-plt.plot(imu.data['/gy80/imu/raw'][:,0], imu.data['/gy80/imu/raw'][:,10], 'r')
-plt.legend(['vn100', 'gy80'])
 
+if False:
 
+    #np.savetxt('/home/stew/gps.csv', gnss.data['/gps/fix'], delimiter=',')
+    #np.savetxt('/home/stew/gpsf.csv', gnss.data['/gps/filtered'], delimiter=',')
 
-fig = plt.figure()
-fig.suptitle('Plot filter odometry output in 3d')
-ax = fig.add_subplot(111, projection='3d')
-plt.hold(True)
-plt.plot(odometry.data['/localisation/odometry/filtered'][:, 1],
-         odometry.data['/localisation/odometry/filtered'][:, 2],
-         odometry.data['/localisation/odometry/filtered'][:, 3])
 
+    fig = plt.figure()
+    fig.suptitle('Plot filter odometry output in 3d')
+    ax = fig.add_subplot(111, projection='3d')
+    plt.hold(True)
+    plt.plot(odometry.data['/odometry/gps'][:, 1],
+             odometry.data['/odometry/gps'][:, 2],
+             odometry.data['/odometry/gps'][:, 3])
 
 
-fig = plt.figure()
-fig.suptitle('Plot GNSS output in 3d')
-ax = fig.add_subplot(111, projection='3d')
-plt.hold(True)
-plt.plot(gnss.data['/gnss/extended_fix'][:, 2],
-         gnss.data['/gnss/extended_fix'][:, 3],
-         gnss.data['/gnss/extended_fix'][:, 4])
 
 
+    fig = plt.figure()
+    fig.suptitle('TEST Plot filter odometry output in 3d')
+    ax = fig.add_subplot(111, projection='3d')
+    plt.hold(True)
+    #plt.plot(odometry.data['/localisation_test/odometry/gps'][:, 1],
+    #         odometry.data['/localisation_test/odometry/gps'][:, 2],
+    #         odometry.data['/localisation_test/odometry/gps'][:, 3])
 
-# output the paths to KML
-east_base, north_base, zone, letter = utm.from_latlon(-33.889565,151.1933352)
 
-kml = simplekml.Kml()
+    if len(gnss.data['/gps/fix']) > 0:
+        fig = plt.figure()
+        fig.suptitle('Plot GNSS output in 3d')
+        ax = fig.add_subplot(111, projection='3d')
+        plt.hold(True)
+        plt.plot(gnss.data['/gps/fix'][:, 2],
+                 gnss.data['/gps/fix'][:, 3],
+                 gnss.data['/gps/fix'][:, 4])
 
-odometry.add_KML_path(kml, 'filtered',
-             east_base, odometry.data['/localisation/odometry/filtered'][:, 2],
-             north_base, odometry.data['/localisation/odometry/filtered'][:, 1],
-             simplekml.Color.green)
+        plt.plot(gnss.data['/gps/filtered'][:, 2],
+                 gnss.data['/gps/filtered'][:, 3],
+                 gnss.data['/gps/filtered'][:, 4])
 
-odometry.add_KML_path(kml, 'gy80',
-             east_base, odometry.data['/gy80/odometry'][:, 1],
-             north_base, odometry.data['/gy80/odometry'][:, 2],
-             simplekml.Color.red)
 
-imu.add_KML_path(kml, 'vn100 gyro',
-             east_base, imu.gyro_path['/vn100/imu'][:,1],
-             north_base, imu.gyro_path['/vn100/imu'][:,2],
-             simplekml.Color.yellow)
 
-imu.add_KML_path(kml, 'vn100 attitude',
-             east_base, imu.attitude_path['/vn100/imu'][:,1],
-             north_base, imu.attitude_path['/vn100/imu'][:,2],
-             simplekml.Color.blue)
 
-kml.save('/home/stew/test.kml')
 
 
 
+    plt.figure()
+    plt.title("Position from various sources")
 
+    plt.subplot(321)
+    plt.hold(True)
 
+    plt.plot(gnss.data['/gps/filtered'][:,2], gnss.data['/gps/filtered'][:,3], 'r')
 
+    #plt.plot(position.data['/localisation_test/odometry/gps'][:,1], position.data['/localisation_test/odometry/gps'][:,2], 'b')
+    #plt.plot(odometry.data['/localisation_test/odometry/gps'][:, 1],
+    #         odometry.data['/localisation_test/odometry/gps'][:, 2], 'b')
+    #plt.plot(odometry.recalculated_data['/localisation_test/odometry/gps'][:,1],
+    #         odometry.recalculated_data['/localisation_test/odometry/gps'][:,2], 'g.')
+    plt.legend(['gps filtered'])
 
-plt.figure()
-plt.title("Position from various sources")
 
-plt.subplot(321)
-plt.hold(True)
+    plt.subplot(322)
+    plt.hold(True)
 
 
-plt.plot(imu.gyro_path['/gy80/imu/raw'][:,1],
-         imu.gyro_path['/gy80/imu/raw'][:,2], 'g.')
+    plt.plot(imu.gyro_path['/imu/data'][:,1],
+             imu.gyro_path['/imu/data'][:,2], 'g.')
 
-plt.plot(imu.attitude_path['/gy80/imu/raw'][:,1],
-         imu.attitude_path['/gy80/imu/raw'][:,2], 'r.')
+    plt.plot(imu.attitude_path['/imu/data'][:,1],
+             imu.attitude_path['/imu/data'][:,2], 'r.')
 
+    #plt.plot(position['/zio/odometry/rear'][:,1], position['/zio/odometry/rear'][:,2], 'b')
+    #plt.plot(recalc_position['/zio/odometry/rear'][:,1],
+    #         recalc_position['/zio/odometry/rear'][:,2], 'g-.')
+    #plt.legend(['rear', 'rear (recalc)'])
+    plt.legend(['vn100 gyro path', 'vn100 attitude path'])
 
-#plt.plot(position['/zio/odometry/front'][:,1], position['/zio/odometry/front'][:,2], 'b')
-#plt.plot(recalc_position['/zio/odometry/front'][:,1],
-#         recalc_position['/zio/odometry/front'][:,2], 'g-.')
-plt.legend(['gy80 gyro path', 'gy80 attitude path'])
+    plt.subplot(323)
+    plt.hold(True)
+    #plt.plot(gnss['/ublox_gps/fix'][:,3] - gnss['/ublox_gps/fix'][1,3], gnss['/ublox_gps/fix'][:,2] - gnss['/ublox_gps/fix'][1,2], 'r')
+    plt.plot(gnss.data['/gps/fix'][:,2], gnss.data['/gps/fix'][:,3], 'r')
+    plt.subplot(324)
+    plt.hold(True)
 
+    #plt.plot(position.data['/localisation_test/odometry/gps'][:,1], position.data['/localisation_test/odometry/gps'][:,2], 'b')
+    plt.plot(odometry.data['/odometry/gps'][:, 1],
+             odometry.data['/odometry/gps'][:, 2], 'b')
+    plt.plot(odometry.recalculated_data['/odometry/gps'][:,1],
+             odometry.recalculated_data['/odometry/gps'][:,2], 'g.')
+    #    plt.plot(recalc_position['/localisation_test/odometry/gps'][:,1],
+    #         recalc_position['/localisation_test/odometry/gps'][:,2], 'g-.')
+    plt.legend(['filtered', 'filtered (recalc)'])
 
-plt.subplot(322)
-plt.hold(True)
 
-
-plt.plot(imu.gyro_path['/vn100/imu'][:,1],
-         imu.gyro_path['/vn100/imu'][:,2], 'g.')
-
-plt.plot(imu.attitude_path['/vn100/imu'][:,1],
-         imu.attitude_path['/vn100/imu'][:,2], 'r.')
-
-#plt.plot(position['/zio/odometry/rear'][:,1], position['/zio/odometry/rear'][:,2], 'b')
-#plt.plot(recalc_position['/zio/odometry/rear'][:,1],
-#         recalc_position['/zio/odometry/rear'][:,2], 'g-.')
-#plt.legend(['rear', 'rear (recalc)'])
-plt.legend(['vn100 gyro path', 'vn100 attitude path'])
-
-plt.subplot(323)
-plt.hold(True)
-
-#plt.plot(gnss['/gnss/extended_fix'][:,3] - gnss['/gnss/extended_fix'][1,3], gnss['/gnss/extended_fix'][:,2] - gnss['/gnss/extended_fix'][1,2], 'r')
-plt.plot(gnss.data['/gnss/extended_fix'][:,2], gnss.data['/gnss/extended_fix'][:,3], 'r')
-
-plt.subplot(324)
-plt.hold(True)
-
-#plt.plot(position.data['/localisation/odometry/filtered'][:,1], position.data['/localisation/odometry/filtered'][:,2], 'b')
-plt.plot(odometry.data['/localisation/odometry/filtered'][:, 1],
-         odometry.data['/localisation/odometry/filtered'][:, 2], 'b')
-plt.plot(odometry.recalculated_data['/localisation/odometry/filtered'][:,1],
-         odometry.recalculated_data['/localisation/odometry/filtered'][:,2], 'g.')
-#    plt.plot(recalc_position['/localisation/odometry/filtered'][:,1],
-#         recalc_position['/localisation/odometry/filtered'][:,2], 'g-.')
-plt.legend(['filtered', 'filtered (recalc)'])
-
-
-plt.subplot(325)
-plt.hold(True)
-#plt.plot(odometry.data['/gy80/odometry'][:,1], odometry['/gy80/odometry'][:,2], 'b')
-plt.plot(odometry.data['/gy80/odometry'][:, 1],
-         odometry.data['/gy80/odometry'][:, 2], 'b')
-plt.plot(odometry.recalculated_data['/gy80/odometry'][:,1],
-         odometry.recalculated_data['/gy80/odometry'][:,2], 'g.')
-#plt.plot(recalc_position_constrained['/gy80/odometry'][:,1],
-#         recalc_position_constrained['/gy80/odometry'][:,2], 'r-.')
-plt.legend(['gy80 odom', 'gy80 recalculated'])
+    plt.subplot(325)
+    plt.hold(True)
+    #plt.plot(odometry.data['/gy80/odometry'][:,1], odometry['/gy80/odometry'][:,2], 'b')
+    #plt.plot(odometry.data['/gy80/odometry'][:, 1],
+    #         odometry.data['/gy80/odometry'][:, 2], 'b')
+    #plt.plot(odometry.recalculated_data['/gy80/odometry'][:,1],
+    #         odometry.recalculated_data['/gy80/odometry'][:,2], 'g.')
+    #plt.plot(recalc_position_constrained['/gy80/odometry'][:,1],
+    #         recalc_position_constrained['/gy80/odometry'][:,2], 'r-.')
+    plt.legend(['gy80 odom', 'gy80 recalculated'])
 
 
 

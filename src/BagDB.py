@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-class ROSBagAnalysis:
+class BagDB:
     def __init__(self):
         # Try to connect
         try:
@@ -27,6 +27,7 @@ class ROSBagAnalysis:
                	bag_positions.bagid,
         	    bag_positions.positiontime
             from bag_positions
+            where bag_positions.bagid >= 353
             order by bag_positions.positiontime"""
 
         self.restricted_position_query = """select EXTRACT(EPOCH FROM bag_positions.positiontime), 
@@ -81,7 +82,7 @@ class ROSBagAnalysis:
         kml.save(filename)
 
     def ExtractSeparateTraces(self, position_query, query_data):
-        cur = conn.cursor()
+        cur = self.conn.cursor()
 
         try:
             cur.execute(position_query, query_data)
@@ -143,16 +144,16 @@ class ROSBagAnalysis:
 
     def LoadData(self, position_query, query_data, required_bounding_boxes, output_kml_path):
 
-        samples = ExtractSeparateTraces(position_query, query_data)
-        RemoveOutlierPaths(samples, required_bounding_boxes)
-        OutputPathsToKML(samples, output_kml_path)
+        samples = self.ExtractSeparateTraces(position_query, query_data)
+        self.RemoveOutlierPaths(samples, required_bounding_boxes)
+        self.OutputPathsToKML(samples, output_kml_path)
 
         return samples
 
     def PerformAnalysis(self, samples, sensor_query, limit_samples=1e10, direction='bidirectional'):
 
         sensor_data = dict()
-        cur = conn.cursor()
+        cur = self.conn.cursor()
 
         for (bag_id, sample) in zip(samples.iterkeys(), samples.itervalues()):
             np_sample = np.array(sample)
@@ -173,7 +174,7 @@ class ROSBagAnalysis:
 
             for row in cur.fetchall():
                 # find the nearest position to sensor sample time
-                closest_index = find_closest(np_sample[:, 0], row[0])
+                closest_index = self.find_closest(np_sample[:, 0], row[0])
                 sensor.append((row[0], row[1], row[2], np_sample[closest_index, 1], np_sample[closest_index, 2],
                                np_sample[closest_index, 3], np_sample[closest_index, 4]))
 

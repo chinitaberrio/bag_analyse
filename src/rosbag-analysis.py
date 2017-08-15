@@ -12,16 +12,16 @@ from shapely.geometry import asLineString
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from ROSBagAnalysis import ROSBagAnalysis
+from BagDB import BagDB
 
 
 if __name__ == "__main__":
 
-    analysis = ROSBagAnalysis()
+    analysis = BagDB()
 
-    output_all_traces = False
-    output_close_to_uni_analysis = True
-    output_bridge_analysis = True
+    output_all_traces = True
+    output_close_to_uni_analysis = False
+    output_bridge_analysis = False
 
     query_data = (151.202, -33.870, 151.22, -33.833)
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         # output all of the data
         traces = analysis.ExtractSeparateTraces(analysis.position_query, ())
         #traces = ExtractSeparateTraces(restricted_position_query, (151.0, -33.96, 151.27, -33.8))
-        analysis.OutputPathsToKML(traces, '/home/stew/all_paths.kml')
+        analysis.OutputPathsToKML(traces, '/home/stew/420_paths_part_2.kml')
 
 
     if output_close_to_uni_analysis:
