@@ -18,7 +18,9 @@ usage: bag-analyse.py [-h] -bag INPUT_BAG [-kml OUTPUT_KML_FILE] [-yaw]
 optional arguments:
   -h, --help            show this help message and exit
   -bag INPUT_BAG, --input-bag INPUT_BAG
-                        Name of the ROS bag file to analyse
+                        Name of the ROS bag file to analyse. If a folder is
+                        selected, the latest bag file in that folder is
+                        analysed
   -kml OUTPUT_KML_FILE, --output-kml-file OUTPUT_KML_FILE
                         If given, the position information is output to this
                         KML file to be used in google earth

@@ -1,7 +1,10 @@
 #! /usr/bin/env python
 import sys
 import math
+import rospy
 import rosbag
+import glob
+import os
 
 import numpy as np
 import pandas as pd
@@ -15,10 +18,11 @@ import argparse
 
 
 if __name__=="__main__":
+    rospy.init_node('bag_analysis', anonymous=True)
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-bag', '--input-bag', help='Name of the ROS bag file to analyse', required=True)
+    parser.add_argument('-bag', '--input-bag', help='Name of the ROS bag file to analyse. If a folder is selected, the latest bag file in that folder is analysed', required=True)
     parser.add_argument('-kml', '--output-kml-file', help='If given, the position information is output to this KML file to be used in google earth')
 
     parser.add_argument('-yaw', '--show-yaw', help='Plot the yaw information from various sources', action='store_true')
@@ -39,10 +43,17 @@ if __name__=="__main__":
                     args.show_3d_gnss or
                     args.show_3d_odometry or
                     args.output_kml_file):
-            print ('Nothing has been selected to plot or output - for more information use --help')
+            rospy.logerr('Nothing has been selected to plot or output - for more information use --help')
         else:
 
-            container = DataContainer(rosbag.Bag(args.input_bag),
+            if os.path.isfile(args.input_bag):
+                bag_file_name = args.input_bag
+            elif os.path.isdir(args.input_bag):
+                list_of_files = glob.glob(args.input_bag + '/*.bag')
+                bag_file_name = max(list_of_files, key=os.path.getctime) # pick the latest file
+                rospy.loginfo('latest file in folder ' + args.input_bag + ' is ' + bag_file_name)
+
+            container = DataContainer(rosbag.Bag(bag_file_name),
                                       steering=Steering([]),
                                       velocity=Velocity([]),
                                       imu=IMU(['/vn100/imu']),
