@@ -18,6 +18,9 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('-bag', '--input-bag', help='Name of the ROS bag file to analyse', required=True)
+    parser.add_argument('-kml', '--output-kml-file', help='If given, the position information is output to this KML file to be used in google earth')
+
     parser.add_argument('-yaw', '--show-yaw', help='Plot the yaw information from various sources', action='store_true')
     parser.add_argument('-yaw-rate', '--show-yaw-rate', help='Plot the yaw rate information from various sources', action='store_true')
     parser.add_argument('-speed', '--show-speed', help='Plot the speed information from various sources', action='store_true')
@@ -25,8 +28,6 @@ if __name__=="__main__":
     parser.add_argument('-pos-3d-gnss', '--show-3d-gnss', help='Plot the position information from GNSS sources in 3d', action='store_true')
     parser.add_argument('-pos-3d-odometry', '--show-3d-odometry', help='Plot the position information from odometry sources in 3d', action='store_true')
 
-    parser.add_argument('-bag', '--input-bag', help='Name of the ROS bag file to analyse')
-    parser.add_argument('-kml', '--output-kml-file', help='If given, the position information is output to this KML file to be used in google earth')
     args = parser.parse_args()
 
     if args.input_bag != "":

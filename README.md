@@ -11,12 +11,17 @@ This script connects to the bag database and performs some specific anaysis that
 #### rosrun bag_analysis bag-analyse.py --help
 
 ```
-usage: bag-analyse.py [-h] [-yaw] [-yaw-rate] [-speed] [-pos] [-pos-3d-gnss]
-                      [-pos-3d-odometry] [-bag INPUT_BAG]
-                      [-kml OUTPUT_KML_FILE]
+usage: bag-analyse.py [-h] -bag INPUT_BAG [-kml OUTPUT_KML_FILE] [-yaw]
+                      [-yaw-rate] [-speed] [-pos] [-pos-3d-gnss]
+                      [-pos-3d-odometry]
 
 optional arguments:
   -h, --help            show this help message and exit
+  -bag INPUT_BAG, --input-bag INPUT_BAG
+                        Name of the ROS bag file to analyse
+  -kml OUTPUT_KML_FILE, --output-kml-file OUTPUT_KML_FILE
+                        If given, the position information is output to this
+                        KML file to be used in google earth
   -yaw, --show-yaw      Plot the yaw information from various sources
   -yaw-rate, --show-yaw-rate
                         Plot the yaw rate information from various sources
@@ -28,10 +33,5 @@ optional arguments:
   -pos-3d-odometry, --show-3d-odometry
                         Plot the position information from odometry sources in
                         3d
-  -bag INPUT_BAG, --input-bag INPUT_BAG
-                        Name of the ROS bag file to analyse
-  -kml OUTPUT_KML_FILE, --output-kml-file OUTPUT_KML_FILE
-                        If given, the position information is output to this
-                        KML file to be used in google earth
 
 ```
