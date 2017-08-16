@@ -7,6 +7,7 @@ class DataContainer:
     def __init__(self,
                  bag,
                  gnss=GNSS([]),
+                 gnss_rates=GNSSRates([]),
                  imu=IMU([]),
                  odometry=Odometry([]),
                  steering=Steering([]),
@@ -14,6 +15,7 @@ class DataContainer:
                  target_speed_source='/zio/odometry/rear'):
 
         self.gnss = gnss
+        self.gnss_rates = gnss_rates
         self.imu = imu
         self.odometry = odometry
         self.steering = steering
@@ -34,11 +36,16 @@ class DataContainer:
 
             if topic in self.gnss.topic_list:
                 self.gnss.new_message(topic, msg, t)
+
+                # take the first GNSS message and use as the datum for later plots
                 if len(self.datum) == 0 \
                         and self.gnss.data[topic][-1][2] > 300000 \
                         and self.gnss.data[topic][-1][2] < 350000 \
                         and self.gnss.data[topic][-1][5] != 0.0:
                     self.datum = np.array(self.gnss.data[topic][-1])
+
+            elif topic in self.gnss_rates.topic_list:
+                self.gnss_rates.new_message(topic, msg, t)
 
             elif topic in self.imu.topic_list:
                 self.imu.new_message(topic, msg, t, current_speed)
@@ -59,6 +66,7 @@ class DataContainer:
         self.imu.convert_numpy()
         self.odometry.convert_numpy()
         self.gnss.convert_numpy()
+        self.gnss_rates.convert_numpy()
         self.velocity.convert_numpy()
         self.steering.convert_numpy()
 

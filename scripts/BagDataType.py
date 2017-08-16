@@ -157,6 +157,17 @@ class GNSS(BagDataType):
         self.previous_north[topic] = north
 
 
+class GNSSRates(BagDataType):
+    def new_message(self, topic, msg, t):
+        self.data[topic].append([t.to_sec(),
+                                 msg.twist.twist.linear.x,
+                                 msg.twist.twist.linear.y,
+                                 msg.twist.twist.linear.z,
+                                 math.sqrt(math.pow(msg.twist.twist.linear.x, 2) +
+                                           math.pow(msg.twist.twist.linear.y, 2) +
+                                           math.pow(msg.twist.twist.linear.z, 2))])
+
+
 class Steering(BagDataType):
     def new_message(self, topic, msg, t):
         self.data[topic].append([t.to_sec(), msg.position[2]])

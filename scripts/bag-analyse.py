@@ -58,7 +58,8 @@ if __name__=="__main__":
                                       velocity=Velocity([]),
                                       imu=IMU(['/vn100/imu']),
                                       odometry=Odometry(['/localisation_3d/odometry/gps', '/localisation_3d/odometry/filtered', '/zio/odometry/rear']),
-                                      gnss=GNSS(['/ublox_gps/fix', '/localisation_3d/gps/filtered']))
+                                      gnss=GNSS(['/ublox_gps/fix', '/localisation_3d/gps/filtered']),
+                                      gnss_rates=GNSSRates(['/ublox_gps/fix_velocity']))
 
             # np.savetxt('/home/stew/gps.csv', gnss.data['/gps/fix'], delimiter=',')
             # np.savetxt('/home/stew/gpsf.csv', gnss.data['/gps/filtered'], delimiter=',')
@@ -67,11 +68,6 @@ if __name__=="__main__":
             output_KML_file = ''
             if args.output_kml_file:
                 output_KML_file = args.output_kml_file
-
-            plot_velocity = True
-            plot_yaw_rate = True
-            plot_yaw = True
-            plot_position = True
 
 
             FIXED_IMU_TIMING = 0.01
@@ -89,6 +85,12 @@ if __name__=="__main__":
                     if len(container.odometry.data[topic]) > 0:
                         plt.plot(container.odometry.data[topic][:, 0],
                                  container.odometry.data[topic][:, 7])
+                        legend.append(topic)
+
+                for topic in container.gnss_rates.topic_list:
+                    if len(container.gnss_rates.data[topic]) > 0:
+                        plt.plot(container.gnss_rates.data[topic][:, 0],
+                                 container.gnss_rates.data[topic][:, 4])
                         legend.append(topic)
 
                 plt.legend(legend)
