@@ -23,8 +23,8 @@ if __name__=="__main__":
                                   steering=Steering([]),
                                   velocity=Velocity([]),
                                   imu=IMU(['/vn100/imu']),
-                                  odometry=Odometry(['/odometry/gps', '/odometry/filtered', '/zio/odometry/rear']),
-                                  gnss=GNSS(['/ublox_gps/fix', '/gps/filtered']))
+                                  odometry=Odometry(['/localisation_3d/odometry/gps', '/localisation_3d/odometry/filtered', '/zio/odometry/rear']),
+                                  gnss=GNSS(['/ublox_gps/fix', '/localisation_3d/gps/filtered']))
 
         #odometry = Odometry(['/localisation_test/odometry/gps', '/zio/odometry/front', '/zio/odometry/rear', '/localisation_test/odometry/gps'])
         #steering = Steering(['/zio/joint_states'])
@@ -33,7 +33,7 @@ if __name__=="__main__":
         # outputs to KML only if this variable is not an empty string
         output_KML_file = ''
 
-        if len(sys.argv) > 1:
+        if len(sys.argv) > 2:
             output_KML_file = sys.argv[2]
 
         plot_velocity = True
@@ -168,16 +168,19 @@ if __name__=="__main__":
             plt.hold(True)
             plt.xlabel("east")
             plt.ylabel("north")
+            plt.axis('equal')
 
             plt.subplot(312)
             plt.hold(True)
             plt.xlabel("east")
             plt.ylabel("north")
+            plt.axis('equal')
 
             plt.subplot(313)
             plt.hold(True)
             plt.xlabel("GNSS east")
             plt.ylabel("GNSS north")
+            plt.axis('equal')
 
             legend = []
             for topic in container.odometry.topic_list:

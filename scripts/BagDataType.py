@@ -20,7 +20,6 @@ class BagDataType:
             self.data[topic] = np.array(self.data[topic])
 
     def calculate_odometry(self, odometry, initial_x = 0., initial_y = 0., initial_theta = 0., stationary_constraint=False):
-        print odometry.shape
         deltas = np.diff(odometry[:, 0])
         cumulative_x = initial_x
         cumulative_y = initial_y

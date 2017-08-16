@@ -62,7 +62,6 @@ class DataContainer:
         self.velocity.convert_numpy()
         self.steering.convert_numpy()
 
-        print (self.datum)
         self.odometry.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
         self.imu.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
 
