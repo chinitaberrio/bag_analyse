@@ -2,14 +2,36 @@
 
 ## This project contains scripts which query the rosbag database and plot some results. These scripts were used to generate the graphs presented to Renault in the project report.
 
-### BagDB.py
-
-This script contains the class ROSBagAnalysis, which connects to the rosbag database and contains some functions to load data, output traces to KML, etc.
-
 ### rosbag-analysis.py
 
-This script contains several specific anaysis instances implementing the ROSBagAnalysis class - one for outputting all traces to KML, one for plotting z-acceleration and velocity for a small area near the university and one for plotting a velocity analysis of vehicles driving over the harbour bridge
+This script connects to the bag database and performs some specific anaysis that was used to generate the report for Renault - one for outputting all traces to KML, one for plotting z-acceleration and velocity for a small area near the university and one for plotting a velocity analysis of vehicles driving over the harbour bridge
 
 ### bag-analyse.py
 
-This script contains code for reading a bag file, organising the data and plotting several features (2d and 3d plots). Also can output paths to KML given an initial position
+####rosrun bag_analysis bag-analyse.py --help
+
+'''
+usage: bag-analyse.py [-h] [-yaw] [-yaw-rate] [-speed] [-pos] [-pos-3d-gnss]
+                      [-pos-3d-odometry] [-bag INPUT_BAG]
+                      [-kml OUTPUT_KML_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -yaw, --show-yaw      Plot the yaw information from various sources
+  -yaw-rate, --show-yaw-rate
+                        Plot the yaw rate information from various sources
+  -speed, --show-speed  Plot the speed information from various sources
+  -pos, --show-position
+                        Plot the position information from various sources
+  -pos-3d-gnss, --show-3d-gnss
+                        Plot the position information from GNSS sources in 3d
+  -pos-3d-odometry, --show-3d-odometry
+                        Plot the position information from odometry sources in
+                        3d
+  -bag INPUT_BAG, --input-bag INPUT_BAG
+                        Name of the ROS bag file to analyse
+  -kml OUTPUT_KML_FILE, --output-kml-file OUTPUT_KML_FILE
+                        If given, the position information is output to this
+                        KML file to be used in google earth
+
+'''
