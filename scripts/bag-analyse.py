@@ -25,11 +25,11 @@ if __name__=="__main__":
     parser.add_argument('-pos-3d-gnss', '--show-3d-gnss', help='Plot the position information from GNSS sources in 3d', action='store_true')
     parser.add_argument('-pos-3d-odometry', '--show-3d-odometry', help='Plot the position information from odometry sources in 3d', action='store_true')
 
-    parser.add_argument('-n', '--input-file', help='Name of the ROS bag file to analyse')
+    parser.add_argument('-bag', '--input-bag', help='Name of the ROS bag file to analyse')
     parser.add_argument('-kml', '--output-kml-file', help='If given, the position information is output to this KML file to be used in google earth')
     args = parser.parse_args()
 
-    if args.input_file != "":
+    if args.input_bag != "":
 
         if not (args.show_position or
                     args.show_speed or
@@ -41,7 +41,7 @@ if __name__=="__main__":
             print ('Nothing has been selected to plot or output - for more information use --help')
         else:
 
-            container = DataContainer(rosbag.Bag(args.input_file),
+            container = DataContainer(rosbag.Bag(args.input_bag),
                                       steering=Steering([]),
                                       velocity=Velocity([]),
                                       imu=IMU(['/vn100/imu']),
