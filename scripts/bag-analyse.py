@@ -22,6 +22,8 @@ if __name__=="__main__":
     parser.add_argument('-yaw-rate', '--show-yaw-rate', help='Plot the yaw rate information from various sources', action='store_true')
     parser.add_argument('-speed', '--show-speed', help='Plot the speed information from various sources', action='store_true')
     parser.add_argument('-pos', '--show-position', help='Plot the position information from various sources', action='store_true')
+    parser.add_argument('-pos-3d-gnss', '--show-3d-gnss', help='Plot the position information from GNSS sources in 3d', action='store_true')
+    parser.add_argument('-pos-3d-odometry', '--show-3d-odometry', help='Plot the position information from odometry sources in 3d', action='store_true')
 
     parser.add_argument('-n', '--input-file', help='Name of the ROS bag file to analyse')
     parser.add_argument('-kml', '--output-kml-file', help='If given, the position information is output to this KML file to be used in google earth')
@@ -29,7 +31,13 @@ if __name__=="__main__":
 
     if args.input_file != "":
 
-        if not (args.show_position or args.show_speed or args.show_yaw or args.show_yaw_rate or args.output_kml_file):
+        if not (args.show_position or
+                    args.show_speed or
+                    args.show_yaw or
+                    args.show_yaw_rate or
+                    args.show_3d_gnss or
+                    args.show_3d_odometry or
+                    args.output_kml_file):
             print ('Nothing has been selected to plot or output - for more information use --help')
         else:
 
@@ -40,9 +48,8 @@ if __name__=="__main__":
                                       odometry=Odometry(['/localisation_3d/odometry/gps', '/localisation_3d/odometry/filtered', '/zio/odometry/rear']),
                                       gnss=GNSS(['/ublox_gps/fix', '/localisation_3d/gps/filtered']))
 
-            #odometry = Odometry(['/localisation_test/odometry/gps', '/zio/odometry/front', '/zio/odometry/rear', '/localisation_test/odometry/gps'])
-            #steering = Steering(['/zio/joint_states'])
-            #velocity = Velocity(['/zio/joint_states'])
+            # np.savetxt('/home/stew/gps.csv', gnss.data['/gps/fix'], delimiter=',')
+            # np.savetxt('/home/stew/gpsf.csv', gnss.data['/gps/filtered'], delimiter=',')
 
             # outputs to KML only if this variable is not an empty string
             output_KML_file = ''
@@ -233,119 +240,32 @@ if __name__=="__main__":
                     plt.legend(legend)
 
 
-
-
             if len(output_KML_file) > 0:
-
                 container.output_KML_path(output_KML_file)
 
+            if args.show_3d_odometry:
+                for topic in container.odometry.topic_list:
+                    if len(container.odometry.data[topic]) > 0:
+                        fig = plt.figure()
+                        fig.suptitle('3-Dimensional ' + topic + ' position')
+                        ax = fig.add_subplot(111, projection='3d')
+                        plt.hold(True)
+                        plt.axis('equal')
+                        plt.plot(container.odometry.data[topic][:, 1],
+                                 container.odometry.data[topic][:, 2],
+                                 container.odometry.data[topic][:, 3])
 
-
-            if False:
-
-                #np.savetxt('/home/stew/gps.csv', gnss.data['/gps/fix'], delimiter=',')
-                #np.savetxt('/home/stew/gpsf.csv', gnss.data['/gps/filtered'], delimiter=',')
-
-
-                fig = plt.figure()
-                fig.suptitle('Plot filter odometry output in 3d')
-                ax = fig.add_subplot(111, projection='3d')
-                plt.hold(True)
-                plt.plot(odometry.data['/odometry/gps'][:, 1],
-                         odometry.data['/odometry/gps'][:, 2],
-                         odometry.data['/odometry/gps'][:, 3])
-
-
-
-
-                fig = plt.figure()
-                fig.suptitle('TEST Plot filter odometry output in 3d')
-                ax = fig.add_subplot(111, projection='3d')
-                plt.hold(True)
-                #plt.plot(odometry.data['/localisation_test/odometry/gps'][:, 1],
-                #         odometry.data['/localisation_test/odometry/gps'][:, 2],
-                #         odometry.data['/localisation_test/odometry/gps'][:, 3])
-
-
-                if len(gnss.data['/gps/fix']) > 0:
-                    fig = plt.figure()
-                    fig.suptitle('Plot GNSS output in 3d')
-                    ax = fig.add_subplot(111, projection='3d')
-                    plt.hold(True)
-                    plt.plot(gnss.data['/gps/fix'][:, 2],
-                             gnss.data['/gps/fix'][:, 3],
-                             gnss.data['/gps/fix'][:, 4])
-
-                    plt.plot(gnss.data['/gps/filtered'][:, 2],
-                             gnss.data['/gps/filtered'][:, 3],
-                             gnss.data['/gps/filtered'][:, 4])
-
-
-
-
-
-
-
-                plt.figure()
-                plt.title("Position from various sources")
-
-                plt.subplot(321)
-                plt.hold(True)
-
-                plt.plot(gnss.data['/gps/filtered'][:,2], gnss.data['/gps/filtered'][:,3], 'r')
-
-                #plt.plot(position.data['/localisation_test/odometry/gps'][:,1], position.data['/localisation_test/odometry/gps'][:,2], 'b')
-                #plt.plot(odometry.data['/localisation_test/odometry/gps'][:, 1],
-                #         odometry.data['/localisation_test/odometry/gps'][:, 2], 'b')
-                #plt.plot(odometry.recalculated_data['/localisation_test/odometry/gps'][:,1],
-                #         odometry.recalculated_data['/localisation_test/odometry/gps'][:,2], 'g.')
-                plt.legend(['gps filtered'])
-
-
-                plt.subplot(322)
-                plt.hold(True)
-
-
-                plt.plot(imu.gyro_path['/imu/data'][:,1],
-                         imu.gyro_path['/imu/data'][:,2], 'g.')
-
-                plt.plot(imu.attitude_path['/imu/data'][:,1],
-                         imu.attitude_path['/imu/data'][:,2], 'r.')
-
-                #plt.plot(position['/zio/odometry/rear'][:,1], position['/zio/odometry/rear'][:,2], 'b')
-                #plt.plot(recalc_position['/zio/odometry/rear'][:,1],
-                #         recalc_position['/zio/odometry/rear'][:,2], 'g-.')
-                #plt.legend(['rear', 'rear (recalc)'])
-                plt.legend(['vn100 gyro path', 'vn100 attitude path'])
-
-                plt.subplot(323)
-                plt.hold(True)
-                #plt.plot(gnss['/ublox_gps/fix'][:,3] - gnss['/ublox_gps/fix'][1,3], gnss['/ublox_gps/fix'][:,2] - gnss['/ublox_gps/fix'][1,2], 'r')
-                plt.plot(gnss.data['/gps/fix'][:,2], gnss.data['/gps/fix'][:,3], 'r')
-                plt.subplot(324)
-                plt.hold(True)
-
-                #plt.plot(position.data['/localisation_test/odometry/gps'][:,1], position.data['/localisation_test/odometry/gps'][:,2], 'b')
-                plt.plot(odometry.data['/odometry/gps'][:, 1],
-                         odometry.data['/odometry/gps'][:, 2], 'b')
-                plt.plot(odometry.recalculated_data['/odometry/gps'][:,1],
-                         odometry.recalculated_data['/odometry/gps'][:,2], 'g.')
-                #    plt.plot(recalc_position['/localisation_test/odometry/gps'][:,1],
-                #         recalc_position['/localisation_test/odometry/gps'][:,2], 'g-.')
-                plt.legend(['filtered', 'filtered (recalc)'])
-
-
-                plt.subplot(325)
-                plt.hold(True)
-                #plt.plot(odometry.data['/gy80/odometry'][:,1], odometry['/gy80/odometry'][:,2], 'b')
-                #plt.plot(odometry.data['/gy80/odometry'][:, 1],
-                #         odometry.data['/gy80/odometry'][:, 2], 'b')
-                #plt.plot(odometry.recalculated_data['/gy80/odometry'][:,1],
-                #         odometry.recalculated_data['/gy80/odometry'][:,2], 'g.')
-                #plt.plot(recalc_position_constrained['/gy80/odometry'][:,1],
-                #         recalc_position_constrained['/gy80/odometry'][:,2], 'r-.')
-                plt.legend(['gy80 odom', 'gy80 recalculated'])
-
+            if args.show_3d_gnss:
+                for topic in container.gnss.topic_list:
+                    if len(container.gnss.data[topic]) > 0:
+                        fig = plt.figure()
+                        fig.suptitle('3-Dimensional ' + topic + ' position')
+                        ax = fig.add_subplot(111, projection='3d')
+                        plt.hold(True)
+                        plt.axis('equal')
+                        plt.plot(container.gnss.data[topic][:, 2],
+                                 container.gnss.data[topic][:, 3],
+                                 container.gnss.data[topic][:, 4])
 
             plt.show()
 
