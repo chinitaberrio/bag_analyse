@@ -25,6 +25,9 @@ optional arguments:
                         If given, the position information is output to this
                         KML file to be used in google earth
   -yaw, --show-yaw      Plot the yaw information from various sources
+  -pitch-roll, --show-pitch-roll
+                        Plot the Pitch and Roll information from various
+                        sources
   -yaw-rate, --show-yaw-rate
                         Plot the yaw rate information from various sources
   -speed, --show-speed  Plot the speed information from various sources
