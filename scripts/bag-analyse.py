@@ -26,6 +26,7 @@ if __name__=="__main__":
     parser.add_argument('-kml', '--output-kml-file', help='If given, the position information is output to this KML file to be used in google earth')
 
     parser.add_argument('-yaw', '--show-yaw', help='Plot the yaw information from various sources', action='store_true')
+    parser.add_argument('-pitch-roll', '--show-pitch-roll', help='Plot the Pitch and Roll information from various sources', action='store_true')
     parser.add_argument('-yaw-rate', '--show-yaw-rate', help='Plot the yaw rate information from various sources', action='store_true')
     parser.add_argument('-speed', '--show-speed', help='Plot the speed information from various sources', action='store_true')
     parser.add_argument('-pos', '--show-position', help='Plot the position information from various sources', action='store_true')
@@ -119,8 +120,8 @@ if __name__=="__main__":
                 plt.legend(legend)
 
 
-            # plot yaw information
-            if args.show_yaw:
+            # plot show_pitch_roll information
+            if args.show_pitch_roll:
                 plt.figure()
                 plt.suptitle("Pitch/Roll from various sources")
 
@@ -167,6 +168,8 @@ if __name__=="__main__":
 
                 plt.legend(legend)
 
+            # plot show_yaw information
+            if args.show_yaw:
                 plt.figure()
                 plt.title("Yaw from various sources")
                 plt.hold(True)
