@@ -122,19 +122,53 @@ if __name__=="__main__":
             # plot yaw information
             if args.show_yaw:
                 plt.figure()
-                plt.suptitle("Yaw from various sources")
+                plt.suptitle("Pitch/Roll from various sources")
 
-                plt.subplot(311)
+                plt.subplot(211)
                 plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("roll angle (rad)")
 
-                plt.subplot(312)
+                plt.subplot(212)
                 plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("pitch angle (rad)")
 
-                plt.subplot(313)
+                legend = []
+
+                for topic in container.odometry.topic_list:
+                    if len(container.odometry.data[topic]) > 0:
+                        plt.subplot(211)
+                        plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
+                                 np.unwrap(container.odometry.data[topic][:, container.odometry.ROLL]))
+
+                        plt.subplot(212)
+                        plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
+                                 np.unwrap(container.odometry.data[topic][:, container.odometry.PITCH]))
+
+                        legend.append(topic)
+
+                for topic in container.imu.topic_list:
+                    if len(container.imu.data[topic]) > 0:
+                        plt.subplot(211)
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.cumsum(container.imu.data[topic][:, container.imu.ROLL_RATE] * FIXED_IMU_TIMING))
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.unwrap(container.imu.data[topic][:, container.imu.ROLL]), 'g')
+
+                        plt.subplot(212)
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.cumsum(container.imu.data[topic][:, container.imu.PITCH_RATE] * FIXED_IMU_TIMING))
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.unwrap(container.imu.data[topic][:, container.imu.PITCH]), 'g')
+
+                        legend.append(topic+"-gyro")
+                        legend.append(topic+"-attitude")
+
+                plt.legend(legend)
+
+                plt.figure()
+                plt.title("Yaw from various sources")
                 plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("yaw angle (rad)")
@@ -143,15 +177,6 @@ if __name__=="__main__":
 
                 for topic in container.odometry.topic_list:
                     if len(container.odometry.data[topic]) > 0:
-                        plt.subplot(311)
-                        plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
-                                 np.unwrap(container.odometry.data[topic][:, container.odometry.ROLL]))
-
-                        plt.subplot(312)
-                        plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
-                                 np.unwrap(container.odometry.data[topic][:, container.odometry.PITCH]))
-
-                        plt.subplot(313)
                         plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
                                  np.unwrap(container.odometry.data[topic][:, container.odometry.YAW]))
 
@@ -159,30 +184,16 @@ if __name__=="__main__":
 
                 for topic in container.imu.topic_list:
                     if len(container.imu.data[topic]) > 0:
-                        plt.subplot(311)
-                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
-                                 np.cumsum(container.imu.data[topic][:, container.imu.ROLL_RATE] * FIXED_IMU_TIMING))
-                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
-                                 np.unwrap(container.imu.data[topic][:, container.imu.ROLL]), 'g')
-
-                        plt.subplot(312)
-                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
-                                 np.cumsum(container.imu.data[topic][:, container.imu.PITCH_RATE] * FIXED_IMU_TIMING))
-                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
-                                 np.unwrap(container.imu.data[topic][:, container.imu.PITCH]), 'g')
-
-                        plt.subplot(313)
                         plt.plot(container.imu.data[topic][:, container.imu.TIME],
                                  np.cumsum(container.imu.data[topic][:, container.imu.YAW_RATE] * FIXED_IMU_TIMING))
                         plt.plot(container.imu.data[topic][:, container.imu.TIME],
                                  np.unwrap(container.imu.data[topic][:, container.imu.YAW]), 'g')
 
-                        legend.append(topic+"-gyro")
-                        legend.append(topic+"-attitude")
+                        legend.append(topic + "-gyro")
+                        legend.append(topic + "-attitude")
 
                 for topic in container.gnss.topic_list:
                     if len(container.gnss.data[topic]) > 0:
-                        plt.subplot(313)
                         plt.plot(container.gnss.data[topic][1:, container.gnss.TIME],
                                  np.unwrap(container.gnss.data[topic][1:, container.gnss.HEADING]))
 
