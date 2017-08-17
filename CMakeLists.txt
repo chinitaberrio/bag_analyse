@@ -46,6 +46,11 @@ catkin_install_python(PROGRAMS
 	scripts/DataContainer.py
 	scripts/bag-analyse.py
 	scripts/rosbag-analysis.py
+	scripts/GNSS.py
+    scripts/IMU.py
+    scripts/Odometry.py
+    scripts/VehicleState.py
+
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
