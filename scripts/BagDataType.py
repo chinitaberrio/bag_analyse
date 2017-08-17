@@ -49,6 +49,20 @@ class BagDataType:
 # IMU has an additional field which is filled in with the latest speed measurement
 #  This enables the recalculation of odometry information using yaw and speed
 class IMU(BagDataType):
+
+    TIME = 0
+    QX = 1
+    QY = 2
+    QZ = 3
+    QW = 4
+    ROLL = 5
+    PITCH = 6
+    YAW = 7
+    ROLL_RATE = 8
+    PITCH_RATE = 9
+    YAW_RATE = 10
+    SPEED = 11
+
     def new_message(self, topic, msg, t, current_speed):
         euler = tf.transformations.euler_from_quaternion(
             [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w])
@@ -80,6 +94,12 @@ class IMU(BagDataType):
             self.gyro_path[key] = np.array(self.gyro_path[key])
             self.attitude_path[key] = np.array(self.attitude_path[key])
 
+    PATH_TIME = 0
+    PATH_X = 1
+    PATH_Y = 2
+    PATH_YAW = 3
+    PATH_YAW_RATE = 4
+    PATH_SPEED = 5
 
     def calculate_imu_odometry_gyro(self, imu, initial_theta=0.):
         deltas = np.diff(imu[:,0])
@@ -108,6 +128,17 @@ class IMU(BagDataType):
 
 
 class Odometry(BagDataType):
+
+    TIME = 0
+    X = 1
+    Y = 2
+    Z = 3
+    ROLL = 4
+    PITCH = 5
+    YAW = 6
+    SPEED = 7
+    YAW_RATE = 8
+
     def new_message(self, topic, msg, t):
         euler = tf.transformations.euler_from_quaternion(
             [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z,
@@ -138,9 +169,18 @@ class Odometry(BagDataType):
 
 class GNSS(BagDataType):
 
+    TIME = 0
+    EASTING = 2
+    NORTHING = 3
+    ALTITUDE = 4
+    HEADING = 5
+    LATITUDE = 6
+    LONGITUDE = 7
+
     def __init__(self, topic_list):
         self.previous_east = dict()
         self.previous_north = dict()
+
         BagDataType.__init__(self, topic_list)
 
     def new_message(self, topic, msg, t):
@@ -158,6 +198,13 @@ class GNSS(BagDataType):
 
 
 class GNSSRates(BagDataType):
+
+    TIME = 0
+    V_X = 2
+    V_Y = 3
+    V_Z = 4
+    SPEED = 5
+
     def new_message(self, topic, msg, t):
         self.data[topic].append([t.to_sec(),
                                  msg.twist.twist.linear.x,

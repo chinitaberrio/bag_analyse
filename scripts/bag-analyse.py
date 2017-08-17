@@ -83,14 +83,14 @@ if __name__=="__main__":
 
                 for topic in container.odometry.topic_list:
                     if len(container.odometry.data[topic]) > 0:
-                        plt.plot(container.odometry.data[topic][:, 0],
-                                 container.odometry.data[topic][:, 7])
+                        plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
+                                 container.odometry.data[topic][:, container.odometry.SPEED])
                         legend.append(topic)
 
                 for topic in container.gnss_rates.topic_list:
                     if len(container.gnss_rates.data[topic]) > 0:
-                        plt.plot(container.gnss_rates.data[topic][:, 0],
-                                 container.gnss_rates.data[topic][:, 4])
+                        plt.plot(container.gnss_rates.data[topic][:, container.gnss_rates.TIME],
+                                 container.gnss_rates.data[topic][:, container.gnss_rates.SPEED])
                         legend.append(topic)
 
                 plt.legend(legend)
@@ -106,14 +106,14 @@ if __name__=="__main__":
 
                 for topic in container.odometry.topic_list:
                     if len(container.odometry.data[topic]) > 0:
-                        plt.plot(container.odometry.data[topic][:, 0],
-                                 container.odometry.data[topic][:, 8])
+                        plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
+                                 container.odometry.data[topic][:, container.odometry.YAW_RATE])
                         legend.append(topic)
 
                 for topic in container.imu.topic_list:
                     if len(container.imu.data[topic]) > 0:
-                        plt.plot(container.imu.data[topic][:, 0],
-                                 container.imu.data[topic][:, 10])
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 container.imu.data[topic][:, container.imu.YAW_RATE])
                         legend.append(topic)
 
                 plt.legend(legend)
@@ -144,38 +144,38 @@ if __name__=="__main__":
                 for topic in container.odometry.topic_list:
                     if len(container.odometry.data[topic]) > 0:
                         plt.subplot(311)
-                        plt.plot(container.odometry.data[topic][:, 0],
-                                 np.unwrap(container.odometry.data[topic][:, 4]))
+                        plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
+                                 np.unwrap(container.odometry.data[topic][:, container.odometry.ROLL]))
 
                         plt.subplot(312)
-                        plt.plot(container.odometry.data[topic][:, 0],
-                                 np.unwrap(container.odometry.data[topic][:, 5]))
+                        plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
+                                 np.unwrap(container.odometry.data[topic][:, container.odometry.PITCH]))
 
                         plt.subplot(313)
-                        plt.plot(container.odometry.data[topic][:, 0],
-                                 np.unwrap(container.odometry.data[topic][:, 6]))
+                        plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
+                                 np.unwrap(container.odometry.data[topic][:, container.odometry.YAW]))
 
                         legend.append(topic)
 
                 for topic in container.imu.topic_list:
                     if len(container.imu.data[topic]) > 0:
                         plt.subplot(311)
-                        plt.plot(container.imu.data[topic][:, 0],
-                                 np.cumsum(container.imu.data[topic][:, 8] * FIXED_IMU_TIMING))
-                        plt.plot(container.imu.data[topic][:, 0],
-                                 np.unwrap(container.imu.data[topic][:, 5]), 'g')
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.cumsum(container.imu.data[topic][:, container.imu.ROLL_RATE] * FIXED_IMU_TIMING))
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.unwrap(container.imu.data[topic][:, container.imu.ROLL]), 'g')
 
                         plt.subplot(312)
-                        plt.plot(container.imu.data[topic][:, 0],
-                                 np.cumsum(container.imu.data[topic][:, 9] * FIXED_IMU_TIMING))
-                        plt.plot(container.imu.data[topic][:, 0],
-                                 np.unwrap(container.imu.data[topic][:, 6]), 'g')
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.cumsum(container.imu.data[topic][:, container.imu.PITCH_RATE] * FIXED_IMU_TIMING))
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.unwrap(container.imu.data[topic][:, container.imu.PITCH]), 'g')
 
                         plt.subplot(313)
-                        plt.plot(container.imu.data[topic][:, 0],
-                                 np.cumsum(container.imu.data[topic][:, 10] * FIXED_IMU_TIMING))
-                        plt.plot(container.imu.data[topic][:, 0],
-                                 np.unwrap(container.imu.data[topic][:, 7]), 'g')
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.cumsum(container.imu.data[topic][:, container.imu.YAW_RATE] * FIXED_IMU_TIMING))
+                        plt.plot(container.imu.data[topic][:, container.imu.TIME],
+                                 np.unwrap(container.imu.data[topic][:, container.imu.YAW]), 'g')
 
                         legend.append(topic+"-gyro")
                         legend.append(topic+"-attitude")
@@ -183,8 +183,8 @@ if __name__=="__main__":
                 for topic in container.gnss.topic_list:
                     if len(container.gnss.data[topic]) > 0:
                         plt.subplot(313)
-                        plt.plot(container.gnss.data[topic][1:, 0],
-                                 np.unwrap(container.gnss.data[topic][1:, 5]))
+                        plt.plot(container.gnss.data[topic][1:, container.gnss.TIME],
+                                 np.unwrap(container.gnss.data[topic][1:, container.gnss.HEADING]))
 
                         legend.append(topic)
 
@@ -217,8 +217,8 @@ if __name__=="__main__":
                 for topic in container.odometry.topic_list:
                     if len(container.odometry.data[topic]) > 0:
                         plt.subplot(311)
-                        plt.plot(container.odometry.data[topic][:, 2],
-                                 container.odometry.data[topic][:, 1] * -1.)
+                        plt.plot(container.odometry.data[topic][:, container.odometry.Y],
+                                 container.odometry.data[topic][:, container.odometry.X] * -1.)
 
                         legend.append(topic)
 
@@ -229,11 +229,11 @@ if __name__=="__main__":
                 for topic in container.imu.topic_list:
                     if len(container.imu.data[topic]) > 0:
                         plt.subplot(312)
-                        plt.plot(container.imu.gyro_path[topic][:, 2],
-                                 container.imu.gyro_path[topic][:, 1] * -1.)
+                        plt.plot(container.imu.gyro_path[topic][:, container.imu.PATH_Y],
+                                 container.imu.gyro_path[topic][:, container.imu.PATH_X] * -1.)
 
-                        plt.plot(container.imu.attitude_path[topic][:, 2],
-                                 container.imu.attitude_path[topic][:, 1] * -1.)
+                        plt.plot(container.imu.attitude_path[topic][:, container.imu.PATH_Y],
+                                 container.imu.attitude_path[topic][:, container.imu.PATH_X] * -1.)
 
                         legend.append((topic+'-gyro'))
                         legend.append((topic+'-attitude'))
@@ -245,8 +245,8 @@ if __name__=="__main__":
                 for topic in container.gnss.topic_list:
                     if len(container.gnss.data[topic]) > 0:
                         plt.subplot(313)
-                        plt.plot(container.gnss.data[topic][:, 2],
-                                 container.gnss.data[topic][:, 3])
+                        plt.plot(container.gnss.data[topic][:, container.gnss.EASTING],
+                                 container.gnss.data[topic][:, container.gnss.NORTHING])
 
                         legend.append(topic)
 
@@ -265,9 +265,9 @@ if __name__=="__main__":
                         ax = fig.add_subplot(111, projection='3d')
                         plt.hold(True)
                         plt.axis('equal')
-                        plt.plot(container.odometry.data[topic][:, 1],
-                                 container.odometry.data[topic][:, 2],
-                                 container.odometry.data[topic][:, 3])
+                        plt.plot(container.odometry.data[topic][:, container.odometry.X],
+                                 container.odometry.data[topic][:, container.odometry.Y],
+                                 container.odometry.data[topic][:, container.odometry.Z])
 
             if args.show_3d_gnss:
                 for topic in container.gnss.topic_list:
@@ -277,9 +277,9 @@ if __name__=="__main__":
                         ax = fig.add_subplot(111, projection='3d')
                         plt.hold(True)
                         plt.axis('equal')
-                        plt.plot(container.gnss.data[topic][:, 2],
-                                 container.gnss.data[topic][:, 3],
-                                 container.gnss.data[topic][:, 4])
+                        plt.plot(container.gnss.data[topic][:, container.gnss.EASTING],
+                                 container.gnss.data[topic][:, container.gnss.NORTHING],
+                                 container.gnss.data[topic][:, container.gnss.ALTITUDE])
 
             plt.show()
 
