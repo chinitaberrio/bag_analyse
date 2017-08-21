@@ -1,7 +1,5 @@
 import tf
-import utm
 import math
-import simplekml
 import numpy as np
 
 from BagDataType import BagDataType
@@ -32,6 +30,7 @@ class IMU(BagDataType):
                                  euler[0], euler[1], euler[2],
                                  msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z,
                                  current_speed])
+
 
     def recalculate_odometry_2d(self, initial_heading=0.):
         # recompute the position from the imu measurements (yaw and attitude)

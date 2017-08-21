@@ -1,12 +1,7 @@
-import tf
 import utm
 import math
-import simplekml
-import numpy as np
 
 from BagDataType import BagDataType
-
-
 
 class GNSS(BagDataType):
 
@@ -30,8 +25,6 @@ class GNSS(BagDataType):
         estimated_heading = 0.
         if topic in self.previous_east:
             estimated_heading = math.atan2(north - self.previous_north[topic], east - self.previous_east[topic])
-            #if (topic == '/gps/fix'):
-            #    print (estimated_heading, east, north, self.previous_east[topic], self.previous_north, north - self.previous_north, east - self.previous_east)
         self.data[topic].append([t.to_sec(), 0., east, north, msg.altitude, estimated_heading, msg.latitude, msg.longitude])
 
         self.previous_east[topic] = east
