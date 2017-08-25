@@ -81,6 +81,9 @@ class DataContainer:
         if len(self.datum) > 0:
             self.odometry.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
             self.imu.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
+        else:
+            self.odometry.recalculate_odometry_2d(0.)
+            self.imu.recalculate_odometry_2d(0.)
 
         self.gnss.estimate_yaw_rate()
 
