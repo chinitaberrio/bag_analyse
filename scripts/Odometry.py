@@ -22,11 +22,18 @@ class Odometry(BagDataType):
             [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z,
              msg.pose.pose.orientation.w])
 
-        self.data[topic].append([t.to_sec(),
-                                 msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z,
-                                 euler[0], euler[1], euler[2],
-                                 msg.twist.twist.linear.x,
-                                 msg.twist.twist.angular.z])
+        if topic == 'ibeo/odometry':
+            self.data[topic].append([msg.header.stamp.to_sec(),
+                                     msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z,
+                                     euler[0], euler[1], euler[2],
+                                     msg.twist.twist.linear.x,
+                                     msg.twist.twist.angular.z])
+        else:
+            self.data[topic].append([msg.header.stamp.to_sec(),
+                                     msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z,
+                                     euler[0], euler[1], euler[2],
+                                     msg.twist.twist.linear.x,
+                                     msg.twist.twist.angular.z])
 
     def recalculate_odometry_2d(self, initial_heading=0.):
         # recompute the position from the odometry rate measurements (yaw and velocity)

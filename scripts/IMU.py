@@ -25,7 +25,7 @@ class IMU(BagDataType):
         euler = tf.transformations.euler_from_quaternion(
             [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w])
 
-        self.data[topic].append([t.to_sec(),
+        self.data[topic].append([msg.header.stamp.to_sec(),
                                  msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w,
                                  euler[0], euler[1], euler[2],
                                  msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z,

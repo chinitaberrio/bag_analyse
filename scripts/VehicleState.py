@@ -9,11 +9,11 @@ from BagDataType import BagDataType
 
 class Steering(BagDataType):
     def new_message(self, topic, msg, t):
-        self.data[topic].append([t.to_sec(), msg.position[2]])
+        self.data[topic].append([msg.header.stamp.to_sec(), msg.position[2]])
 
 
 class Velocity(BagDataType):
     def new_message(self, topic, msg, t):
-        self.data[topic].append([t.to_sec(), msg.velocity[0], msg.velocity[1], msg.velocity[2], msg.velocity[3]])
+        self.data[topic].append([msg.header.stamp.to_sec(), msg.velocity[0], msg.velocity[1], msg.velocity[2], msg.velocity[3]])
 
 

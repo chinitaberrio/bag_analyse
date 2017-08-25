@@ -35,6 +35,8 @@ class DataContainer:
             # if (t.to_sec() < 30+1.49678753e9 or t.to_sec() > 75+1.49678753e9):
             #    continue
 
+            #print (topic, self.imu.topic_list)
+
             if topic == target_speed_source:
                 current_speed = msg.twist.twist.linear.x
 
@@ -43,6 +45,8 @@ class DataContainer:
 
                 # take the first GNSS message and use as the datum for later plots
                 if len(self.datum) == 0 \
+                        and topic in self.gnss.data \
+                        and len(self.gnss.data[topic]) > 0 \
                         and self.gnss.data[topic][-1][self.gnss.EASTING] > 300000 \
                         and self.gnss.data[topic][-1][self.gnss.EASTING] < 350000 \
                         and self.gnss.data[topic][-1][self.gnss.HEADING] != 0.0:
@@ -74,8 +78,11 @@ class DataContainer:
         self.velocity.convert_numpy()
         self.steering.convert_numpy()
 
-        self.odometry.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
-        self.imu.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
+        if len(self.datum) > 0:
+            self.odometry.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
+            self.imu.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
+
+        self.gnss.estimate_yaw_rate()
 
 
     def output_KML_path(self, file_name):

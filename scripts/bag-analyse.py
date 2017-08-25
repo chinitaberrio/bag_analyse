@@ -12,6 +12,7 @@ import pandas as pd
 from IMU import IMU
 from GNSS import GNSS, GNSSRates
 from Odometry import Odometry
+from PandasAnalysis import PandasAnalysis
 from VehicleState import Velocity, Steering
 
 from DataContainer import DataContainer
@@ -37,6 +38,8 @@ if __name__=="__main__":
     parser.add_argument('-pos-3d-gnss', '--show-3d-gnss', help='Plot the position information from GNSS sources in 3d', action='store_true')
     parser.add_argument('-pos-3d-odometry', '--show-3d-odometry', help='Plot the position information from odometry sources in 3d', action='store_true')
 
+    parser.add_argument('-pandas', '--run-pandas', help='[DEVEL] run pandas scripts', action='store_true')
+
     args = parser.parse_args()
 
     if args.input_bag != "":
@@ -47,6 +50,7 @@ if __name__=="__main__":
                     args.show_yaw_rate or
                     args.show_3d_gnss or
                     args.show_3d_odometry or
+                    args.run_pandas or
                     args.output_kml_file):
             rospy.logerr('Nothing has been selected to plot or output - for more information use --help')
         else:
@@ -61,13 +65,17 @@ if __name__=="__main__":
             container = DataContainer(rosbag.Bag(bag_file_name),
                                       steering=Steering([]),
                                       velocity=Velocity([]),
-                                      imu=IMU(['/vn100/imu']),
-                                      odometry=Odometry(['/localisation_3d/odometry/gps', '/localisation_3d/odometry/filtered', '/zio/odometry/rear']),
-                                      gnss=GNSS(['/ublox_gps/fix', '/localisation_3d/gps/filtered']),
+                                      imu=IMU(['/vn100/imu', 'xsens/IMU']),
+                                      odometry=Odometry(['/localisation_3d/odometry/gps', '/localisation_3d/odometry/filtered', '/localisation_debug/odometry/gps', '/localisation_debug/odometry/filtered', '/zio/odometry/rear', 'ibeo/odometry']),
+                                      gnss=GNSS(['/ublox_gps/fix', '/localisation_3d/gps/filtered', '/localisation_debug/gps/filtered', 'ibeo/gnss']),
                                       gnss_rates=GNSSRates(['/ublox_gps/fix_velocity']))
 
             # np.savetxt('/home/stew/gps.csv', gnss.data['/gps/fix'], delimiter=',')
             # np.savetxt('/home/stew/gpsf.csv', gnss.data['/gps/filtered'], delimiter=',')
+
+            print (container.odometry.data['ibeo/odometry'])
+            print (container.gnss.data['ibeo/gnss'])
+            print (container.imu.data['xsens/IMU'])
 
             # outputs to KML only if this variable is not an empty string
             output_KML_file = ''
@@ -98,6 +106,12 @@ if __name__=="__main__":
                                  container.gnss_rates.data[topic][:, container.gnss_rates.SPEED])
                         legend.append(topic)
 
+                for topic in container.gnss.topic_list:
+                    if len(container.gnss.data[topic]) > 0:
+                        plt.plot(container.gnss.data[topic][:, container.gnss.TIME],
+                                 container.gnss.data[topic][:, container.gnss.SPEED])
+                        legend.append(topic)
+
                 plt.legend(legend)
 
             # plot yaw rate information
@@ -113,12 +127,20 @@ if __name__=="__main__":
                     if len(container.odometry.data[topic]) > 0:
                         plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
                                  container.odometry.data[topic][:, container.odometry.YAW_RATE])
+
                         legend.append(topic)
 
                 for topic in container.imu.topic_list:
                     if len(container.imu.data[topic]) > 0:
                         plt.plot(container.imu.data[topic][:, container.imu.TIME],
                                  container.imu.data[topic][:, container.imu.YAW_RATE])
+                        legend.append(topic)
+
+
+                for topic in container.gnss.topic_list:
+                    if len(container.gnss.data[topic]) > 0:
+                        plt.plot(container.gnss.data[topic][:, container.gnss.TIME],
+                                 container.gnss.data[topic][:, container.gnss.YAW_RATE])
                         legend.append(topic)
 
                 plt.legend(legend)
@@ -236,7 +258,7 @@ if __name__=="__main__":
                     if len(container.odometry.data[topic]) > 0:
                         plt.subplot(311)
                         plt.plot(container.odometry.data[topic][:, container.odometry.Y],
-                                 container.odometry.data[topic][:, container.odometry.X] * -1.)
+                                 container.odometry.data[topic][:, container.odometry.X] * -1., '.')
 
                         legend.append(topic)
 
@@ -248,10 +270,10 @@ if __name__=="__main__":
                     if len(container.imu.data[topic]) > 0:
                         plt.subplot(312)
                         plt.plot(container.imu.gyro_path[topic][:, container.imu.PATH_Y],
-                                 container.imu.gyro_path[topic][:, container.imu.PATH_X] * -1.)
+                                 container.imu.gyro_path[topic][:, container.imu.PATH_X] * -1., '.')
 
                         plt.plot(container.imu.attitude_path[topic][:, container.imu.PATH_Y],
-                                 container.imu.attitude_path[topic][:, container.imu.PATH_X] * -1.)
+                                 container.imu.attitude_path[topic][:, container.imu.PATH_X] * -1., '.')
 
                         legend.append((topic+'-gyro'))
                         legend.append((topic+'-attitude'))
@@ -264,7 +286,7 @@ if __name__=="__main__":
                     if len(container.gnss.data[topic]) > 0:
                         plt.subplot(313)
                         plt.plot(container.gnss.data[topic][:, container.gnss.EASTING],
-                                 container.gnss.data[topic][:, container.gnss.NORTHING])
+                                 container.gnss.data[topic][:, container.gnss.NORTHING], '.')
 
                         legend.append(topic)
 
@@ -298,6 +320,11 @@ if __name__=="__main__":
                         plt.plot(container.gnss.data[topic][:, container.gnss.EASTING],
                                  container.gnss.data[topic][:, container.gnss.NORTHING],
                                  container.gnss.data[topic][:, container.gnss.ALTITUDE])
+
+            if args.run_pandas:
+                pa = PandasAnalysis()
+                pa.run_analysis(container)
+
 
             plt.show()
 
