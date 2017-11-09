@@ -20,6 +20,9 @@ class IMU(BagDataType):
     PITCH_RATE = 9
     YAW_RATE = 10
     SPEED = 11
+    ACC_X = 12
+    ACC_Y = 13
+    ACC_Z = 14
 
     def new_message(self, topic, msg, t, current_speed):
         euler = tf.transformations.euler_from_quaternion(
@@ -29,7 +32,8 @@ class IMU(BagDataType):
                                  msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w,
                                  euler[0], euler[1], euler[2],
                                  msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z,
-                                 current_speed])
+                                 current_speed,
+                                 msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z])
 
 
     def recalculate_odometry_2d(self, initial_heading=0.):
@@ -66,7 +70,7 @@ class IMU(BagDataType):
         cumulative_y = 0.
         cumulative_theta = initial_theta
 
-        for (t, ox, oy, oz, ow, roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate, v), dt in zip(imu[1:,:], deltas):
+        for (t, ox, oy, oz, ow, roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate, v, accx, accy, accz), dt in zip(imu[1:,:], deltas):
             #dt = 0.01
             cumulative_theta += dt * yaw_rate
             cumulative_x += math.cos(cumulative_theta) * v * dt
@@ -79,7 +83,7 @@ class IMU(BagDataType):
         cumulative_x = 0.
         cumulative_y = 0.
 
-        for (t, ox, oy, oz, ow, roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate, v), dt in zip(imu[1:, :], deltas):
+        for (t, ox, oy, oz, ow, roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate, v, accx, accy, accz), dt in zip(imu[1:, :], deltas):
             #dt = 0.01
             cumulative_x += math.cos(yaw) * v * dt
             cumulative_y += math.sin(yaw) * v * dt

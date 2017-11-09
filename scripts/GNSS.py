@@ -32,7 +32,8 @@ class GNSS(BagDataType):
         if topic in self.previous_east:
             time_delta = (msg.header.stamp - self.previous_time[topic]).to_sec()
             if len(self.data[topic]) < 10:
-                print time_delta
+                #print time_delta
+                pass
             if time_delta > 0.5:
                 # print (time_delta)
                 estimated_heading = math.atan2(north - self.previous_north[topic], east - self.previous_east[topic])

@@ -16,7 +16,7 @@ class DataContainer:
                  odometry=Odometry([]),
                  steering=Steering([]),
                  velocity=Velocity([]),
-                 target_speed_source='/zio/odometry/rear'):
+                 target_speed_source=['/zio/odometry/rear', 'ibeo/odometry', '/IbeoROS/ibeo/odometry']):
 
         self.gnss = gnss
         self.gnss_rates = gnss_rates
@@ -37,7 +37,7 @@ class DataContainer:
 
             #print (topic, self.imu.topic_list)
 
-            if topic == target_speed_source:
+            if topic in target_speed_source:
                 current_speed = msg.twist.twist.linear.x
 
             if topic in self.gnss.topic_list:
@@ -95,11 +95,19 @@ class DataContainer:
 
         for topic in self.odometry.topic_list:
             if len(self.odometry.data[topic]) > 0:
-                self.odometry.add_KML_path(kml,
+                if ('gps' in topic or 'gnss' in topic or 'ukf/odometry' in topic):
+                    self.odometry.add_KML_path(kml,
+                                            topic,
+                                            0, self.odometry.data[topic][:, self.odometry.X],
+                                            0, self.odometry.data[topic][:, self.odometry.Y],
+                                            simplekml.Color.green, zone, letter)
+                else:
+                    self.odometry.add_KML_path(kml,
                                             topic,
                                             east_base, self.odometry.data[topic][:, self.odometry.Y],
                                             north_base, self.odometry.data[topic][:, self.odometry.X] * -1.,
                                             simplekml.Color.green, zone, letter)
+
 
         for topic in self.gnss.topic_list:
             if len(self.gnss.data[topic]) > 0:
