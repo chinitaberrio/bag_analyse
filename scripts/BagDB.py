@@ -1,6 +1,10 @@
+import os
 import utm
 import math
+import rosbag
+import hashlib
 import psycopg2
+import datetime
 import simplekml
 import intervaltree
 
@@ -12,14 +16,18 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 class BagDB:
-    def __init__(self):
+    def __init__(self, dbname='bag_database_acfr'):
         # Try to connect
         try:
             print ("connecting to the database")
             self.conn = psycopg2.connect(
-                "dbname='bag_database_acfr' user='bag_database' password='letmein' host='localhost' port=5432")
+                "dbname=" + dbname + " user='bag_database' password='letmein' host='localhost' port=5432")
         except:
             print "Unable to connect to the database."
+
+
+        self.collection_of_messages = ""
+        self.tuple_of_message_data = []
 
         self.position_query = """select EXTRACT(EPOCH FROM bag_positions.positiontime), 
             	ST_X(bag_positions.position), 
@@ -181,6 +189,74 @@ class BagDB:
             sensor_data[bag_id] = np.array(sensor)
 
         return sensor_data
+
+
+    # batch commit of messages
+    def CommitMessagesSoFar(self):
+
+        cur = self.conn.cursor()
+
+        if self.collection_of_messages != "":
+            self.collection_of_messages += ","
+
+        args_str = ','.join(cur.mogrify("(%s,%s,%s,%s,%s,%s)", x) for x in self.tuple_of_message_data)
+
+        cur.execute("INSERT INTO bag_message_data VALUES " + args_str)
+
+        self.conn.commit()
+
+        self.tuple_of_message_data = []
+
+
+    # Fill the metadata for each bag
+    def InsertBagMetadata(self, bag, bag_number):
+        cur = self.conn.cursor()
+        print (int(bag.get_compression_info()[1]))
+        cur.execute("INSERT INTO bags (id, createdon, filename, path, starttime, endtime, compressed, messagecount, size, indexed, md5sum, missing, version) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    (bag_number,
+                     datetime.datetime.now(),
+                     os.path.basename(bag.filename),
+                     os.path.dirname(bag.filename),
+                     datetime.datetime.fromtimestamp(bag.get_start_time()),
+                     datetime.datetime.fromtimestamp(bag.get_end_time()),
+                     bag.get_compression_info()[1] == bag.get_compression_info()[2], # is compressed size = uncompressed size
+                     bag.get_message_count(),
+                     int(bag.get_compression_info()[1]),  # assume size is uncompressed ?
+                     True,
+                     hashlib.md5(open(bag.filename, 'rb').read()).hexdigest(),
+                     False,
+                     bag.version
+                     ))
+
+        self.conn.commit()
+
+
+
+    def ClearBagMetadata(self):
+        cur = self.conn.cursor()
+        cur.execute("TRUNCATE bags CASCADE;")
+        # Make the changes to the database persistent
+        self.conn.commit()
+
+
+    # add the message data to be commited later
+    def AddMessageData(self, topic, id, bagid, message_time, lat, lon, message_type, message_dict):
+
+        # TODO: what other invalid messages are possible ? (Infinity is not valid)
+        if 'Infinity' in message_dict or '\\u' in message_dict:
+            pass
+        else:
+            self.tuple_of_message_data.append((id, message_time, bagid, message_dict, message_type, topic))
+
+
+
+    def ClearMessageData(self):
+
+        cur = self.conn.cursor()
+        cur.execute("TRUNCATE bag_message_data ")
+
+        # Make the changes to the database persistent
+        self.conn.commit()
 
 
 
