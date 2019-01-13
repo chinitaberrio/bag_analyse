@@ -7,8 +7,6 @@ import rosbag
 
 import datetime
 
-rospy.init_node('bag_database', anonymous=True)
-
 bagdb = BagDB(dbname="bag_database")
 
 bags = [rosbag.Bag('/home/stew/data/EV/2018-09-13_seymour_auto_bumper/2018-09-13-14-14-05_seymour_auto_bumper.bag'),
