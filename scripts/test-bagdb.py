@@ -24,7 +24,6 @@ bagdb = BagDB(dbname="bag_database")
 
 bags = []
 for file in args.bag_files:
-  print (file)
   bags.append(rosbag.Bag(file))
 
 topics = bags[0].get_type_and_topic_info()[1].keys()
