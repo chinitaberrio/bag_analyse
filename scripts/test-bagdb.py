@@ -1,16 +1,31 @@
 from BagDB import BagDB
 
+import sys
 import json
 import time
 import rospy
 import rosbag
 
 import datetime
+import argparse
+
+parser = argparse.ArgumentParser(description='Imports ROSbags to the SWRI bag-database.')
+parser.add_argument('bag_files', metavar='abc.bag', nargs='+',
+                    help='one or more ROSBag files.')
+
+parser.add_argument('--config', dest='config_file', default='/root/.ros-bag-database/settings.yml',
+                    help='A bag-database style config file.')
+
+args = parser.parse_args()
+
+# TODO: pass the config file name to BagDB(); write a function in BagDB() to handle it
 
 bagdb = BagDB(dbname="bag_database")
 
-bags = [rosbag.Bag('/home/stew/data/EV/2018-09-13_seymour_auto_bumper/2018-09-13-14-14-05_seymour_auto_bumper.bag'),
-        rosbag.Bag('/home/stew/data/EV/2018-08-28_seymour_centre_auto/2018-08-28-14-57-44_seymour_centre_auto.bag')]
+bags = []
+for file in args.bag_files:
+  print (file)
+  bags.append(rosbag.Bag(file))
 
 topics = bags[0].get_type_and_topic_info()[1].keys()
 
