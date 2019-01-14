@@ -8,6 +8,8 @@ import datetime
 import simplekml
 import intervaltree
 
+import re
+import yaml
 import numpy as np
 from shapely.geometry import asLineString
 
@@ -16,12 +18,23 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 class BagDB:
-    def __init__(self, dbname='bag_database_acfr'):
+    def __init__(self, config_file):
         # Try to connect
+	if config_file:
+            # Open the config file, get parameters
+            with open(config_file, 'r') as ymlfile:
+              # Skip the first line, as it contains a nonstandard yaml format that pyyaml doesn't like.
+              for i in range(1):
+                 _ = ymlfile.readline()
+              cfg = yaml.safe_load(ymlfile)
+            username = cfg['jdbcUsername']
+            password = cfg['jdbcPassword']
+            host, dbname = re.match('jdbc:postgresql://(.*?)/(.*)', cfg['jdbcUrl']).groups()
+
         try:
             print ("connecting to the database")
             self.conn = psycopg2.connect(
-                "dbname=" + dbname + " user='bag_database' password='letmein' host='localhost' port=5432")
+                "dbname=" + dbname + " user=" + username + " password=" + password + " host=" + host + " port=5432")
         except:
             print "Unable to connect to the database."
 
