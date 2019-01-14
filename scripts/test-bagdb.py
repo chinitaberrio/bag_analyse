@@ -13,14 +13,12 @@ parser = argparse.ArgumentParser(description='Imports ROSbags to the SWRI bag-da
 parser.add_argument('bag_files', metavar='abc.bag', nargs='+',
                     help='one or more ROSBag files.')
 
-parser.add_argument('--config', dest='config_file', default='/root/.ros-bag-database/settings.yml',
+parser.add_argument('--config', dest='config_file', default='/root/.ros-bag-database/settings.yml', required=True,
                     help='A bag-database style config file.')
 
 args = parser.parse_args()
 
-# TODO: pass the config file name to BagDB(); write a function in BagDB() to handle it
-
-bagdb = BagDB(dbname="bag_database")
+bagdb = BagDB(config_file=args.config_file)
 
 bags = []
 for file in args.bag_files:
