@@ -1,0 +1,13 @@
+!com.github.swrirobotics.support.web.Configuration
+driver: org.postgresql.Driver
+gpsTopics: []
+imuTopics: []
+jdbcPassword: letmein
+jdbcUrl: jdbc:postgresql://bagdb-postgres/bag_database_acfr
+jdbcUsername: bag_database
+metadataTopics: []
+odometryTopics: []
+removeOnDeletion: false
+vehicleNameTopics:
+- /platform_name
+
