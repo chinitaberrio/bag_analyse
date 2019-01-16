@@ -21,7 +21,7 @@ from mpl_toolkits.mplot3d import Axes3D
 class BagDB:
     def __init__(self, config_file):
         # Try to connect
-	if config_file:
+    	if config_file:
             # Open the config file, get parameters
             with open(config_file, 'r') as ymlfile:
               # Skip the first line, as it contains a nonstandard yaml format that pyyaml doesn't like.

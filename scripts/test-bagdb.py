@@ -75,9 +75,7 @@ args = parser.parse_args()
 
 bagdb = BagDB(config_file=args.config_file)
 
-bags = []
-for file in args.bag_files:
-  bags.append(rosbag.Bag(file))
+bag = rosbag.Bag(args.bag_files)
 
 ## This code will be useful later - find the mapping between topic types and
 ## topic names for the entire bag
@@ -101,56 +99,57 @@ print("Processing start time ", datetime.datetime.now())
 batch_query_count = 0
 unique_message_counter = 0
 
-# start counting the bags from 1
-for bag_count, bag in enumerate(bags, 1):
+# insert metadata for each of the bags
+bagdb.InsertBagMetadata(bag, args.bag_id)
 
-    # insert metadata for each of the bags
-    bagdb.InsertBagMetadata(bag, bag_count)
+for topic, msg, rosbag_time in bag.read_messages():
 
-    for topic, msg, t in bag.read_messages():
+    print(topic, msg._type)
 
-        # set to not include tf messages - this condition can be changed to anything
-        # for example:  topic in odom_message_types:
-        if 'tf' not in topic:
-            unique_message_counter+=1
-            message_dict = dict()
+    # set to not include tf messages - this condition can be changed to anything
+    # for example:  topic in odom_message_types:
+    if 'tf' not in topic:
+        unique_message_counter+=1
+        message_dict = dict()
 
-            # recursively extract the message items that are json compatible
-            recursive_msg(msg, "", message_dict)
+        # recursively extract the message items that are json compatible
+        recursive_msg(msg, "", message_dict)
 
-            tree = {}
+        tree = {}
 
-            # turn into a nested dictionary
-            for item, value in zip(message_dict.keys(), message_dict.values()):
-                t = tree
-                string_parts = item.split('.')
-                for i, part in enumerate(string_parts):
-                    if i < len(string_parts) - 1:
-                        # this key contains a nested dictionary
-                        t = t.setdefault(part, {})
-                    else:
-                        # this key is the final value
-                        t.setdefault(part, replace_invalid_data(value))
+        # turn into a nested dictionary
+        for item, value in zip(message_dict.keys(), message_dict.values()):
+            t = tree
+            string_parts = item.split('.')
+            for i, part in enumerate(string_parts):
+                if i < len(string_parts) - 1:
+                    # this key contains a nested dictionary
+                    t = t.setdefault(part, {})
+                else:
+                    # this key is the final value
+                    t.setdefault(part, replace_invalid_data(value))
 
-            message_json = json.dumps(tree)
+        message_json = json.dumps(tree)
 
-            try:
-                # see if the message has a header with timestamp
-                message_time = datetime.datetime.fromtimestamp(float(msg.header.stamp.secs) + (float(msg.header.stamp.nsecs) / 1000000000))
-            except:
-                # if there is no timestamp in the header, use the message recorded time from the rosbag
-                message_time = datetime.datetime.fromtimestamp(float(t.secs) + (float(t.nsecs) / 1000000000))
+        try:
+            # see if the message has a header with timestamp
+            message_time = datetime.datetime.fromtimestamp(float(msg.header.stamp.secs) + (float(msg.header.stamp.nsecs) / 1000000000))
+        except:
+            # if there is no timestamp in the header, use the message recorded time from the rosbag
+            message_time = datetime.datetime.fromtimestamp(float(rosbag_time.secs) + (float(rosbag_time.nsecs) / 1000000000))
 
-            # TODO: set a relationship to the most recent global position message to allow searching
-            batch_query_count += 1
-            bagdb.AddMessageData(topic, unique_message_counter, bag_count, message_time, args.bag_id, 0, msg._type, message_json)
+        # TODO: set a relationship to the most recent global position message to allow searching
+        batch_query_count += 1
+        bagdb.AddMessageData(topic, unique_message_counter, args.bag_id, message_time, args.bag_id, 0, msg._type, message_json)
 
-            if batch_query_count > 20000:
-                print (".")
-                batch_query_count = 0
-                bagdb.CommitMessagesSoFar()
+        if batch_query_count > 20000:
+            print (".")
+            batch_query_count = 0
+            bagdb.CommitMessagesSoFar()
 
-    bagdb.CommitMessagesSoFar()
+bagdb.CommitMessagesSoFar()
+
+bag.close()
 
 print ("End time ", datetime.datetime.now())
 
