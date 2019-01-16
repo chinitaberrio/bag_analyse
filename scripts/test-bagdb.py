@@ -3,11 +3,63 @@ from BagDB import BagDB
 import sys
 import json
 import time
+import math
 import rospy
 import rosbag
 
 import datetime
 import argparse
+
+# some helper functions that should be wrapped in a class performing the bag data entry
+
+# The message value could be a tuple or single value. This function replaces any nan, inf or unicode values
+#  that cannot be stored in the database. These are set to -1 (need to think if this could be a problem)
+def replace_invalid_data(value):
+    try:
+        # if isinstance(value, list) or isinstance(value, tuple):
+        # tuples are immutable, so this has to be converted to a string first
+        if isinstance(value, tuple):
+            value = list(value)
+            for count, item in enumerate(value):
+                if math.isnan(item):
+                    value[count] = -1.
+                elif math.isinf(item):
+                    value[count] = -1.
+            value = tuple(value)
+
+        elif math.isnan(value):
+            value = -1.
+        elif math.isinf(value):
+            value = -1.
+        elif "\\u" in value:
+            print ("unicode here")
+            value = ""
+    except:
+        pass
+
+    return value
+
+
+# test if the value can be converted to jsonable type
+def is_jsonable(x):
+    try:
+        json.dumps(x)
+        return True
+    except:
+        return False
+
+
+# recursively fill the message
+def recursive_msg(message_field, prefix, message_dict):
+    for slot in message_field.__slots__:
+        try:
+            recursive_msg(getattr(message_field, slot), prefix + "." + slot, message_dict)
+        except:
+            if is_jsonable(getattr(message_field, slot)):
+                final_prefix = (prefix + "." + slot)[1:]
+                message_dict[final_prefix] = getattr(message_field, slot)
+
+
 
 parser = argparse.ArgumentParser(description='Imports ROSbags to the SWRI bag-database.')
 parser.add_argument('bag_files', metavar='abc.bag',
@@ -27,23 +79,24 @@ bags = []
 for file in args.bag_files:
   bags.append(rosbag.Bag(file))
 
-topics = bags[0].get_type_and_topic_info()[1].keys()
-
-# get a dictionary for a list of topics belonging to each type
-types = dict()
-for key, value in bags[0].get_type_and_topic_info()[1].iteritems():
-    if value.msg_type not in types:
-        types[value.msg_type] = list()
-
-    types[value.msg_type].append(key)
+## This code will be useful later - find the mapping between topic types and
+## topic names for the entire bag
+#topics = bags[0].get_type_and_topic_info()[1].keys()
+#
+## get a dictionary for a list of topics belonging to each type
+#types = dict()
+#for key, value in bags[0].get_type_and_topic_info()[1].iteritems():
+#    if value.msg_type not in types:
+#        types[value.msg_type] = list()
+#
+#    types[value.msg_type].append(key)
+#odom_message_types = types.get('nav_msgs/Odometry', list())
+#print (odom_message_types)
 
 bagdb.ClearMessageData()
 bagdb.ClearBagMetadata()
 
-#odom_message_types = types.get('nav_msgs/Odometry', list())
-#print (odom_message_types)
-
-print ("Start time ", datetime.datetime.now())
+print("Processing start time ", datetime.datetime.now())
 
 batch_query_count = 0
 unique_message_counter = 0
@@ -57,27 +110,10 @@ for bag_count, bag in enumerate(bags, 1):
     for topic, msg, t in bag.read_messages():
 
         # set to not include tf messages - this condition can be changed to anything
-        if 'tf' not in topic: #True: #topic in odom_message_types:
+        # for example:  topic in odom_message_types:
+        if 'tf' not in topic:
             unique_message_counter+=1
-
             message_dict = dict()
-
-            # test if the value can be converted to jsonable type
-            def is_jsonable(x):
-                try:
-                    json.dumps(x)
-                    return True
-                except:
-                    return False
-
-            def recursive_msg(message_field, prefix, message_dict):
-                for slot in message_field.__slots__:
-                    try:
-                        recursive_msg(getattr(message_field, slot), prefix + "." + slot, message_dict)
-                    except:
-                        if is_jsonable(getattr(message_field, slot)):
-                            final_prefix = (prefix + "." + slot)[1:]
-                            message_dict[final_prefix] = getattr(message_field, slot)
 
             # recursively extract the message items that are json compatible
             recursive_msg(msg, "", message_dict)
@@ -90,19 +126,20 @@ for bag_count, bag in enumerate(bags, 1):
                 string_parts = item.split('.')
                 for i, part in enumerate(string_parts):
                     if i < len(string_parts) - 1:
+                        # this key contains a nested dictionary
                         t = t.setdefault(part, {})
                     else:
-                        t.setdefault(part, value)
+                        # this key is the final value
+                        t.setdefault(part, replace_invalid_data(value))
 
             message_json = json.dumps(tree)
 
-            # TODO: what to do with messages with no timestamp ?
-            # probably should use the most recent time
             try:
-                # see if the message has a header
+                # see if the message has a header with timestamp
                 message_time = datetime.datetime.fromtimestamp(float(msg.header.stamp.secs) + (float(msg.header.stamp.nsecs) / 1000000000))
             except:
-                message_time = datetime.datetime.fromtimestamp(0)
+                # if there is no timestamp in the header, use the message recorded time from the rosbag
+                message_time = datetime.datetime.fromtimestamp(float(t.secs) + (float(t.nsecs) / 1000000000))
 
             # TODO: set a relationship to the most recent global position message to allow searching
             batch_query_count += 1

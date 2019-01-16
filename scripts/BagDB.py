@@ -2,7 +2,8 @@ import os
 import utm
 import math
 import rosbag
-import hashlib
+import random
+#import hashlib
 import psycopg2
 import datetime
 import simplekml
@@ -32,11 +33,11 @@ class BagDB:
             host, dbname = re.match('jdbc:postgresql://(.*?)/(.*)', cfg['jdbcUrl']).groups()
 
         try:
-            print ("connecting to the database")
+            print("connecting to the database")
             self.conn = psycopg2.connect(
                 "dbname=" + dbname + " user=" + username + " password=" + password + " host=" + host + " port=5432")
         except:
-            print "Unable to connect to the database."
+            print("Unable to connect to the database.")
 
 
         self.collection_of_messages = ""
@@ -108,7 +109,7 @@ class BagDB:
         try:
             cur.execute(position_query, query_data)
         except:
-            print "Position query failed"
+            print("Position query failed")
 
         db_rows = cur.fetchall()
 
@@ -139,9 +140,7 @@ class BagDB:
                     distance = math.sqrt(
                         math.pow(row[3] - previous_position[0], 2) + math.pow(row[4] - previous_position[1], 2))
                     if distance > 5000:
-                        print (
-                        '[large jump detected] removing start of path ' + str(key) + ', ' + str(distance) + ', ' + str(
-                            counter))
+                        print ('[large jump detected] removing start of path ' + str(key) + ', ' + str(distance) + ', ' + str(counter))
                         start_position = counter
                 previous_position = (row[3], row[4])
                 counter += 1
@@ -236,7 +235,8 @@ class BagDB:
                      bag.get_message_count(),
                      int(bag.get_compression_info()[1]),  # assume size is uncompressed ?
                      True,
-                     hashlib.md5(open(bag.filename, 'rb').read()).hexdigest(),
+                     # the hash takes a long time and will be done in the java bag database, so the random number is temporary
+                     random.randint(100000, 1e10), #hashlib.md5(open(bag.filename, 'rb').read()).hexdigest(),
                      False,
                      bag.version
                      ))
