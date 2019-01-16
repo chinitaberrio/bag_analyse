@@ -10,11 +10,14 @@ import datetime
 import argparse
 
 parser = argparse.ArgumentParser(description='Imports ROSbags to the SWRI bag-database.')
-parser.add_argument('bag_files', metavar='abc.bag', nargs='+',
-                    help='one or more ROSBag files.')
+parser.add_argument('bag_files', metavar='abc.bag',
+                    help='A ROSBag file.')
 
 parser.add_argument('--config', dest='config_file', default='/root/.ros-bag-database/settings.yml', required=True,
                     help='A bag-database style config file.')
+
+parser.add_argument('--bagid', dest='bag_id', required=True,
+                    help='The ID of the bag to be imported against.')
 
 args = parser.parse_args()
 
@@ -103,7 +106,7 @@ for bag_count, bag in enumerate(bags, 1):
 
             # TODO: set a relationship to the most recent global position message to allow searching
             batch_query_count += 1
-            bagdb.AddMessageData(topic, unique_message_counter, bag_count, message_time, 0, 0, msg._type, message_json)
+            bagdb.AddMessageData(topic, unique_message_counter, bag_count, message_time, args.bag_id, 0, msg._type, message_json)
 
             if batch_query_count > 20000:
                 print (".")
