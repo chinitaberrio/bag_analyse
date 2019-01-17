@@ -134,8 +134,9 @@ for topic, msg, rosbag_time in bag.read_messages():
             message_time = datetime.datetime.fromtimestamp(float(rosbag_time.secs) + (float(rosbag_time.nsecs) / 1000000000))
 
         # TODO: set a relationship to the most recent global position message to allow searching
+        # TODO: when on a position message, generate a geometry position and add it to the query
         batch_query_count += 1
-        bagdb.AddMessageData(topic, unique_message_counter, args.bag_id, message_time, args.bag_id, 0, msg._type, message_json)
+        bagdb.AddMessageData(message_time, args.bag_id, message_json, topic, position_message_id, position_geo )
 
         if batch_query_count > 20000:
             print (".")

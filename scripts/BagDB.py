@@ -94,7 +94,7 @@ class BagDB:
 
 
     # add the message data to be commited later
-    def AddMessageData(self, topic, id, bagid, message_time, lat, lon, message_type, message_dict):
+    def AddMessageData(self, message_time, args.bag_id, message_json, topic, position_message_id, position_geo):
 
         # TODO: what other invalid messages are possible ? (Infinity is not valid)
         if 'Infinity' in message_dict or '\\u' in message_dict:
