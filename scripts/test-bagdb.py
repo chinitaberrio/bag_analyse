@@ -91,9 +91,6 @@ bag = rosbag.Bag(args.bag_files)
 #odom_message_types = types.get('nav_msgs/Odometry', list())
 #print (odom_message_types)
 
-bagdb.ClearMessageData()
-bagdb.ClearBagMetadata()
-
 print("Processing start time ", datetime.datetime.now())
 
 batch_query_count = 0
