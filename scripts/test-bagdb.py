@@ -136,7 +136,12 @@ for topic, msg, rosbag_time in bag.read_messages():
         # TODO: set a relationship to the most recent global position message to allow searching
         # TODO: when on a position message, generate a geometry position and add it to the query
         batch_query_count += 1
-        bagdb.AddMessageData(message_time, args.bag_id, message_json, topic, position_message_id, position_geo )
+
+        position_message_id = 123
+        position_geo = None
+        type_id = 'abcdef'
+
+        bagdb.AddMessageData(message_time, args.bag_id, type_id, message_json, topic, position_message_id, position_geo )
 
         if batch_query_count > 20000:
             print (".")
