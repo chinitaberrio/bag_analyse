@@ -1,21 +1,21 @@
 import os
-import utm
+#import utm
 import math
 import rosbag
 import random
 #import hashlib
 import psycopg2
 import datetime
-import simplekml
-import intervaltree
+#import simplekml
+#import intervaltree
 
 import re
 import yaml
 import numpy as np
 from shapely.geometry import asLineString
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+#import matplotlib.pyplot as plt
+#from mpl_toolkits.mplot3d import Axes3D
 
 
 class BagDB:
@@ -211,9 +211,8 @@ class BagDB:
         if self.collection_of_messages != "":
             self.collection_of_messages += ","
 
-        args_str = ','.join(cur.mogrify("(%s,%s,%s,%s,%s,%s)", x) for x in self.tuple_of_message_data)
-
-        cur.execute("INSERT INTO bag_message_data VALUES " + args_str)
+        args_str = ','.join(cur.mogrify("(%s,%s,%s,%s)", x) for x in self.tuple_of_message_data)
+        cur.execute("INSERT INTO bag_message_data (positiontime, bagid, messagedata, messagetopic) VALUES " + args_str)
 
         self.conn.commit()
 
@@ -259,7 +258,7 @@ class BagDB:
         if 'Infinity' in message_dict or '\\u' in message_dict:
             pass
         else:
-            self.tuple_of_message_data.append((id, message_time, bagid, message_dict, message_type, topic))
+            self.tuple_of_message_data.append((message_time, bagid, message_dict, topic))
 
 
 

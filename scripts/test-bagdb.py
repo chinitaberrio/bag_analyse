@@ -104,7 +104,7 @@ bagdb.InsertBagMetadata(bag, args.bag_id)
 
 for topic, msg, rosbag_time in bag.read_messages():
 
-    print(topic, msg._type)
+    #print(topic, msg._type)
 
     # set to not include tf messages - this condition can be changed to anything
     # for example:  topic in odom_message_types:
