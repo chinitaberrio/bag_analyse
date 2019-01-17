@@ -2,6 +2,7 @@ import os
 import math
 import rosbag
 import psycopg2
+import psycopg2.extras
 import datetime
 
 import re
@@ -60,45 +61,20 @@ class BagDB:
 
         #if self.collection_of_messages != "":
         #    self.collection_of_messages += ","
-
         #args_str = ','.join(cur.mogrify("(%s,%s,%s,%s)", x) for x in self.tuple_of_message_data)
         #cur.execute("INSERT INTO bag_message_data (positiontime, bagid, messagedata, messagetopic) VALUES " + args_str)
-        execute_values(cur, """INSERT INTO bag_message_data (positiontime, bagid, typeid, messagedata, messagetopic, positionmessageid, position) VALUES %s""", self.tuple_of_message_data)
+        psycopg2.extras.execute_values(cur, """INSERT INTO bag_message_data (positiontime, bagid, typeid, messagedata, messagetopic, positionmessageid, position) VALUES %s""", self.tuple_of_message_data)
 
         self.conn.commit()
 
         self.tuple_of_message_data = []
 
 
-    # Fill the metadata for each bag
-    def InsertBagMetadata(self, bag, bag_number):
-        cur = self.conn.cursor()
-        print (int(bag.get_compression_info()[1]))
-        cur.execute("INSERT INTO bags (id, createdon, filename, path, starttime, endtime, compressed, messagecount, size, indexed, md5sum, missing, version) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                    (bag_number,
-                     datetime.datetime.now(),
-                     os.path.basename(bag.filename),
-                     os.path.dirname(bag.filename),
-                     datetime.datetime.fromtimestamp(bag.get_start_time()),
-                     datetime.datetime.fromtimestamp(bag.get_end_time()),
-                     bag.get_compression_info()[1] == bag.get_compression_info()[2], # is compressed size = uncompressed size
-                     bag.get_message_count(),
-                     int(bag.get_compression_info()[1]),  # assume size is uncompressed ?
-                     True,
-                     # the hash takes a long time and will be done in the java bag database, so the random number is temporary
-                     random.randint(100000, 1e10), #hashlib.md5(open(bag.filename, 'rb').read()).hexdigest(),
-                     False,
-                     bag.version
-                     ))
-
-        self.conn.commit()
-
-
     # add the message data to be commited later
-    def AddMessageData(self, message_time, args.bag_id, message_json, topic, position_message_id, position_geo):
+    def AddMessageData(self, message_time, bag_id, type_id, message_json, topic, position_message_id, position_geo):
 
         # TODO: what other invalid messages are possible ? (Infinity is not valid)
-        if 'Infinity' in message_dict or '\\u' in message_dict:
+        if 'Infinity' in message_json or '\\u' in message_json:
             pass
         else:
-            self.tuple_of_message_data.append((message_time, bagid, message_dict, topic))
+            self.tuple_of_message_data.append((message_time, bag_id, type_id, message_json, topic, position_message_id, position_geo))
