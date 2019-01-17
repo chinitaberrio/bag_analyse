@@ -96,8 +96,6 @@ print("Processing start time ", datetime.datetime.now())
 batch_query_count = 0
 unique_message_counter = 0
 
-# insert metadata for each of the bags
-bagdb.InsertBagMetadata(bag, args.bag_id)
 
 for topic, msg, rosbag_time in bag.read_messages():
 
