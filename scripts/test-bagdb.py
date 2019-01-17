@@ -91,20 +91,15 @@ bag = rosbag.Bag(args.bag_files)
 #odom_message_types = types.get('nav_msgs/Odometry', list())
 #print (odom_message_types)
 
-bagdb.ClearMessageData()
-bagdb.ClearBagMetadata()
-
 print("Processing start time ", datetime.datetime.now())
 
 batch_query_count = 0
 unique_message_counter = 0
 
-# insert metadata for each of the bags
-bagdb.InsertBagMetadata(bag, args.bag_id)
 
 for topic, msg, rosbag_time in bag.read_messages():
 
-    print(topic, msg._type)
+    #print(topic, msg._type)
 
     # set to not include tf messages - this condition can be changed to anything
     # for example:  topic in odom_message_types:
@@ -139,8 +134,14 @@ for topic, msg, rosbag_time in bag.read_messages():
             message_time = datetime.datetime.fromtimestamp(float(rosbag_time.secs) + (float(rosbag_time.nsecs) / 1000000000))
 
         # TODO: set a relationship to the most recent global position message to allow searching
+        # TODO: when on a position message, generate a geometry position and add it to the query
         batch_query_count += 1
-        bagdb.AddMessageData(topic, unique_message_counter, args.bag_id, message_time, args.bag_id, 0, msg._type, message_json)
+
+        position_message_id = 123
+        position_geo = None
+        type_id = 'abcdef'
+
+        bagdb.AddMessageData(message_time, args.bag_id, type_id, message_json, topic, position_message_id, position_geo )
 
         if batch_query_count > 20000:
             print (".")
