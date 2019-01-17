@@ -12,7 +12,7 @@ from shapely.geometry import asLineString
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from BagDB import BagDB
+from BagDBAnalysis import BagDBAnalysis as BagDB
 
 
 if __name__ == "__main__":

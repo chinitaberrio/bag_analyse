@@ -42,6 +42,7 @@ include_directories(
 
 catkin_install_python(PROGRAMS
 	scripts/BagDB.py
+	scripts/BagDBAnalysis.py
 	scripts/BagDataType.py
 	scripts/DataContainer.py
 	scripts/bag-analyse.py
