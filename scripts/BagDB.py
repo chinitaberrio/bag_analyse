@@ -55,14 +55,15 @@ class BagDB:
 
     # batch commit of messages
     def CommitMessagesSoFar(self):
-
+        #TODO: implement this as execute_batch rather than single statements
         cur = self.conn.cursor()
 
-        if self.collection_of_messages != "":
-            self.collection_of_messages += ","
+        #if self.collection_of_messages != "":
+        #    self.collection_of_messages += ","
 
-        args_str = ','.join(cur.mogrify("(%s,%s,%s,%s)", x) for x in self.tuple_of_message_data)
-        cur.execute("INSERT INTO bag_message_data (positiontime, bagid, messagedata, messagetopic) VALUES " + args_str)
+        #args_str = ','.join(cur.mogrify("(%s,%s,%s,%s)", x) for x in self.tuple_of_message_data)
+        #cur.execute("INSERT INTO bag_message_data (positiontime, bagid, messagedata, messagetopic) VALUES " + args_str)
+        execute_values(cur, """INSERT INTO bag_message_data (positiontime, bagid, typeid, messagedata, messagetopic, positionmessageid, position) VALUES %s""", self.tuple_of_message_data)
 
         self.conn.commit()
 
