@@ -1,12 +1,8 @@
-import os
-import math
-import rosbag
-import psycopg2
-import psycopg2.extras
-import datetime
-
 import re
 import yaml
+
+import psycopg2
+import psycopg2.extras
 
 
 class BagDB:
@@ -33,48 +29,21 @@ class BagDB:
 
         self.collection_of_messages = ""
         self.tuple_of_message_data = []
-
-        self.position_query = """select EXTRACT(EPOCH FROM bag_positions.positiontime), 
-            	ST_X(bag_positions.position), 
-            	ST_Y(bag_positions.position),
-               	bag_positions.bagid,
-        	    bag_positions.positiontime
-            from bag_positions
-            where bag_positions.bagid >= 353
-            order by bag_positions.positiontime"""
-
-        self.restricted_position_query = """select EXTRACT(EPOCH FROM bag_positions.positiontime), 
-        	    ST_X(bag_positions.position), 
-        	    ST_Y(bag_positions.position),
-        	    bag_positions.bagid,
-        	    bag_positions.positiontime
-            from bag_positions
-            where bag_positions.position && ST_MakeEnvelope(%s, %s, %s, %s)
-            order by bag_positions.positiontime"""
-
  
 
     # batch commit of messages
     def CommitMessagesSoFar(self):
-        #TODO: implement this as execute_batch rather than single statements
         cur = self.conn.cursor()
 
-        #if self.collection_of_messages != "":
-        #    self.collection_of_messages += ","
-        #args_str = ','.join(cur.mogrify("(%s,%s,%s,%s)", x) for x in self.tuple_of_message_data)
-        #cur.execute("INSERT INTO bag_message_data (positiontime, bagid, messagedata, messagetopic) VALUES " + args_str)
         psycopg2.extras.execute_values(cur, """INSERT INTO bag_message_data (positiontime, bagid, typeid, messagedata, messagetopic, positionmessageid, position) VALUES %s""", self.tuple_of_message_data)
-
         self.conn.commit()
 
+        # clear values after they are inserted
         self.tuple_of_message_data = []
 
 
     # add the message data to be commited later
     def AddMessageData(self, message_time, bag_id, type_id, message_json, topic, position_message_id, position_geo):
 
-        # TODO: what other invalid messages are possible ? (Infinity is not valid)
-        if 'Infinity' in message_json or '\\u' in message_json:
-            pass
-        else:
-            self.tuple_of_message_data.append((message_time, bag_id, type_id, message_json, topic, position_message_id, position_geo))
+        # data should be cleaned before this point (remove nan, inf and unicode)
+        self.tuple_of_message_data.append((message_time, bag_id, type_id, message_json, topic, position_message_id, position_geo))
