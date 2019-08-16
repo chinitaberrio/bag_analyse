@@ -51,8 +51,10 @@ catkin_install_python(PROGRAMS
     scripts/IMU.py
     scripts/Odometry.py
     scripts/VehicleState.py
+	scripts/PandasAnalysis.py
 
-    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+
+		DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 
