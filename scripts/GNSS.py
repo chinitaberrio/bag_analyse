@@ -25,32 +25,36 @@ class GNSS(BagDataType):
         BagDataType.__init__(self, topic_list)
 
     def new_message(self, topic, msg, t):
-        east, north, zone, letter = utm.from_latlon(msg.latitude, msg.longitude)
+        try:
+            east, north, zone, letter = utm.from_latlon(msg.latitude, msg.longitude)
 
-        estimated_heading = 0.
-        estimated_speed = 0.
-        if topic in self.previous_east:
-            time_delta = (msg.header.stamp - self.previous_time[topic]).to_sec()
-            if len(self.data[topic]) < 10:
-                #print time_delta
-                pass
-            if time_delta > 0.5:
-                # print (time_delta)
-                estimated_heading = math.atan2(north - self.previous_north[topic], east - self.previous_east[topic])
-                estimated_speed = math.sqrt(math.pow(north - self.previous_north[topic], 2) + math.pow(east - self.previous_east[topic], 2)) / time_delta
+            estimated_heading = 0.
+            estimated_speed = 0.
+            if topic in self.previous_east:
+                time_delta = (msg.header.stamp - self.previous_time[topic]).to_sec()
+                if len(self.data[topic]) < 10:
+                    #print time_delta
+                    pass
+                if time_delta > 0.5 or topic == '/map/fix':
+                    if topic == '/map/fix':
+                        time_delta = 0.01
+                    # print (time_delta)
+                    estimated_heading = math.atan2(north - self.previous_north[topic], east - self.previous_east[topic])
+                    estimated_speed = math.sqrt(math.pow(north - self.previous_north[topic], 2) + math.pow(east - self.previous_east[topic], 2)) / time_delta
 
+                    self.previous_east[topic] = east
+                    self.previous_north[topic] = north
+                    self.previous_time[topic] = msg.header.stamp
+
+                    self.data[topic].append([msg.header.stamp.to_sec(), 0., east, north, msg.altitude, estimated_heading, msg.latitude, msg.longitude, estimated_speed, 0.])
+
+
+            else:
                 self.previous_east[topic] = east
                 self.previous_north[topic] = north
                 self.previous_time[topic] = msg.header.stamp
-
-                self.data[topic].append([msg.header.stamp.to_sec(), 0., east, north, msg.altitude, estimated_heading, msg.latitude, msg.longitude, estimated_speed, 0.])
-
-
-        else:
-            self.previous_east[topic] = east
-            self.previous_north[topic] = north
-            self.previous_time[topic] = msg.header.stamp
-
+        except:
+            pass
 
 
     def estimate_yaw_rate(self):

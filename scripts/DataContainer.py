@@ -91,11 +91,16 @@ class DataContainer:
     def output_KML_path(self, file_name):
         # output the paths to KML
         east_base, north_base, zone, letter = utm.from_latlon(self.datum[6], self.datum[7])
+        print ('east north base ' + str(east_base) + ", " + str(north_base))
         kml = simplekml.Kml()
 
         for topic in self.odometry.topic_list:
             if len(self.odometry.data[topic]) > 0:
-                if ('gps' in topic or 'gnss' in topic or 'ukf/odometry' in topic):
+                #if ('gps' in topic or
+                #        'gnss' in topic or
+                #        'ukf/odometry' in topic):
+                if abs(self.odometry.data[topic][:, self.odometry.X][-1]) >= 100000:
+                    print('KML output topic with gps/gnss/ukf odometry ' + str(topic))
                     self.odometry.add_KML_path(kml,
                                             topic,
                                             0, self.odometry.data[topic][:, self.odometry.X],
@@ -111,6 +116,7 @@ class DataContainer:
 
         for topic in self.gnss.topic_list:
             if len(self.gnss.data[topic]) > 0:
+                print('KML item on gnss topic list ' + str(topic))
                 self.gnss.add_KML_path(kml,
                                         topic,
                                         0, self.gnss.data[topic][:, self.gnss.EASTING],
@@ -119,6 +125,7 @@ class DataContainer:
 
         for topic in self.imu.topic_list:
             if len(self.imu.data[topic]) > 0:
+                print('KML item on imu list ' + str(topic))
                 self.imu.add_KML_path(kml, topic + '-gyro',
                                        east_base, self.imu.gyro_path[topic][:, self.imu.PATH_Y],
                                        north_base, self.imu.gyro_path[topic][:, self.imu.PATH_X] * -1.,

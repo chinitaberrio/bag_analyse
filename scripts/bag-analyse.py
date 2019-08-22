@@ -108,19 +108,19 @@ if __name__=="__main__":
                 for topic in container.odometry.topic_list:
                     if len(container.odometry.data[topic]) > 0:
                         plt.plot(container.odometry.data[topic][:, container.odometry.TIME],
-                                 container.odometry.data[topic][:, container.odometry.SPEED])
+                                 container.odometry.data[topic][:, container.odometry.SPEED], '.-')
                         legend.append(topic)
 
                 for topic in container.gnss_rates.topic_list:
                     if len(container.gnss_rates.data[topic]) > 0:
                         plt.plot(container.gnss_rates.data[topic][:, container.gnss_rates.TIME],
-                                 container.gnss_rates.data[topic][:, container.gnss_rates.SPEED])
+                                 container.gnss_rates.data[topic][:, container.gnss_rates.SPEED], '.-')
                         legend.append(topic)
 
                 for topic in container.gnss.topic_list:
                     if len(container.gnss.data[topic]) > 0:
                         plt.plot(container.gnss.data[topic][:, container.gnss.TIME],
-                                 container.gnss.data[topic][:, container.gnss.SPEED])
+                                 container.gnss.data[topic][:, container.gnss.SPEED], '.-')
                         legend.append(topic)
 
                 plt.legend(legend)
@@ -132,17 +132,17 @@ if __name__=="__main__":
                 plt.suptitle("Acceleration from IMU")
 
                 plt.subplot(311)
-                plt.hold(True)
+                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("X acceleration (m/s^2)")
 
                 plt.subplot(312)
-                plt.hold(True)
+                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("Y acceleration (m/s^2)")
 
                 plt.subplot(313)
-                plt.hold(True)
+                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("Z acceleration (m/s^2)")
 
@@ -201,12 +201,12 @@ if __name__=="__main__":
                 plt.suptitle("Pitch/Roll from various sources")
 
                 plt.subplot(211)
-                plt.hold(True)
+                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("roll angle (rad)")
 
                 plt.subplot(212)
-                plt.hold(True)
+                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("pitch angle (rad)")
 
@@ -247,7 +247,7 @@ if __name__=="__main__":
             if args.show_yaw:
                 plt.figure()
                 plt.title("Yaw from various sources")
-                plt.hold(True)
+                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("yaw angle (rad)")
 
@@ -284,28 +284,35 @@ if __name__=="__main__":
                 plt.figure()
                 plt.suptitle("Position from various sources")
 
-                plt.subplot(311)
-                plt.hold(True)
+                plt.subplot(221)
+                #plt.hold(True)
+                plt.xlabel("x")
+                plt.ylabel("y")
+                plt.axis('equal')
+
+                plt.subplot(222)
+                #plt.hold(True)
                 plt.xlabel("east")
                 plt.ylabel("north")
                 plt.axis('equal')
 
-                plt.subplot(312)
-                plt.hold(True)
-                plt.xlabel("east")
-                plt.ylabel("north")
-                plt.axis('equal')
-
-                plt.subplot(313)
-                plt.hold(True)
+                plt.subplot(223)
+                #plt.hold(True)
                 plt.xlabel("GNSS east")
                 plt.ylabel("GNSS north")
                 plt.axis('equal')
 
+                plt.subplot(224)
+                #plt.hold(True)
+                plt.xlabel("east")
+                plt.ylabel("north")
+                plt.axis('equal')
+
                 legend = []
                 plt.subplot(221)
+                plt.axis('equal')
                 for topic in container.odometry.topic_list:
-                    if len(container.odometry.data[topic]) > 0 and not ('gps' in topic or 'ukf/odometry' in topic or 'gnss' in topic):
+                    if len(container.odometry.data[topic]) > 0 and abs(container.odometry.data[topic][:, container.odometry.X][-1]) <= 100000:
                         plt.plot(container.odometry.data[topic][:, container.odometry.Y],
                                  container.odometry.data[topic][:, container.odometry.X] * -1., '.')
 
@@ -316,8 +323,9 @@ if __name__=="__main__":
 
                 legend = []
                 plt.subplot(224)
+                plt.axis('equal')
                 for topic in container.odometry.topic_list:
-                    if len(container.odometry.data[topic]) > 0 and ('gps' in topic or 'ukf/odometry' in topic or 'gnss' in topic):
+                    if len(container.odometry.data[topic]) > 0 and abs(container.odometry.data[topic][:, container.odometry.X][-1]) > 100000:
                         plt.plot(container.odometry.data[topic][:, container.odometry.X],
                                  container.odometry.data[topic][:, container.odometry.Y], '.')
 
@@ -329,6 +337,7 @@ if __name__=="__main__":
 
                 legend = []
                 plt.subplot(222)
+                plt.axis('equal')
                 for topic in container.imu.topic_list:
                     if len(container.imu.data[topic]) > 0:
                         plt.plot(container.imu.gyro_path[topic][:, container.imu.PATH_Y],
@@ -345,6 +354,7 @@ if __name__=="__main__":
 
                 legend = []
                 plt.subplot(223)
+                plt.axis('equal')
                 for topic in container.gnss.topic_list:
                     if len(container.gnss.data[topic]) > 0:
                         plt.plot(container.gnss.data[topic][:, container.gnss.EASTING],
@@ -371,7 +381,7 @@ if __name__=="__main__":
                         fig = plt.figure()
                         fig.suptitle('3-Dimensional ' + topic + ' position')
                         ax = fig.add_subplot(111, projection='3d')
-                        plt.hold(True)
+                        #plt.hold(True)
                         plt.axis('equal')
                         plt.plot(container.odometry.data[topic][:, container.odometry.X],
                                  container.odometry.data[topic][:, container.odometry.Y],
@@ -383,7 +393,7 @@ if __name__=="__main__":
                         fig = plt.figure()
                         fig.suptitle('3-Dimensional ' + topic + ' position')
                         ax = fig.add_subplot(111, projection='3d')
-                        plt.hold(True)
+                        #plt.hold(True)
                         plt.axis('equal')
                         plt.plot(container.gnss.data[topic][:, container.gnss.EASTING],
                                  container.gnss.data[topic][:, container.gnss.NORTHING],

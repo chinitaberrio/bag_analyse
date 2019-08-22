@@ -51,7 +51,7 @@ if __name__ == "__main__":
         fig = plt.figure()
         fig.suptitle('ROSbag database sensor data plot against position')
         ax = fig.add_subplot(211, projection='3d')
-        plt.hold(True)
+        #plt.hold(True)
         """
 
         fig = plt.figure()
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
         """
         ax = fig.add_subplot(212, projection='3d')
-        plt.hold(True)
+        #plt.hold(True)
         """
 
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         fig = plt.figure()
         fig.suptitle('ROSbag database sensor data plot against position')
         ax = fig.add_subplot(211, projection='3d')
-        plt.hold(True)
+        #plt.hold(True)
 
         for bag_id, uni_sensor_data in uni_imu_sensor_data.iteritems():
 
@@ -154,14 +154,14 @@ if __name__ == "__main__":
         # plot the bridge data
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        plt.hold(True)
+        #plt.hold(True)
     
         for bag_id, north_sensor_data in north_sensor_data.iteritems():
             plt.plot(north_sensor_data[:,3], north_sensor_data[:,4], north_sensor_data[:,1] * 3.6)
     
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        plt.hold(True)
+        #plt.hold(True)
     
         for bag_id, south_sensor_data in south_sensor_data.iteritems():
             plt.plot(south_sensor_data[:,3], south_sensor_data[:,4], south_sensor_data[:,1] * 3.6)
