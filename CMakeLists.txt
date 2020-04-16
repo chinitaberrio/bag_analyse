@@ -6,6 +6,7 @@ project(bag_analysis)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   rospy
+  dataset_tools
 )
 
 
@@ -52,6 +53,7 @@ catkin_install_python(PROGRAMS
     scripts/Odometry.py
     scripts/VehicleState.py
 	scripts/PandasAnalysis.py
+	scripts/Statistics.py
 
 
 		DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

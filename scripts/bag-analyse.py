@@ -11,6 +11,7 @@ import pandas as pd
 
 from IMU import IMU
 from GNSS import GNSS, GNSSRates
+from Statistics import Statistics
 from Odometry import Odometry
 from PandasAnalysis import PandasAnalysis
 from VehicleState import Velocity, Steering
@@ -29,12 +30,14 @@ if __name__=="__main__":
 
     parser.add_argument('-bag', '--input-bag', help='Name of the ROS bag file to analyse. If a folder is selected, the latest bag file in that folder is analysed', required=True)
     parser.add_argument('-kml', '--output-kml-file', help='If given, the position information is output to this KML file to be used in google earth')
+    parser.add_argument('-write-file', '--output-to-file', help='Output the graphs to the folder specified by this parameter', required=False)
 
     parser.add_argument('-yaw', '--show-yaw', help='Plot the yaw information from various sources', action='store_true')
     parser.add_argument('-pitch-roll', '--show-pitch-roll', help='Plot the Pitch and Roll information from various sources', action='store_true')
     parser.add_argument('-yaw-rate', '--show-yaw-rate', help='Plot the yaw rate information from various sources', action='store_true')
     parser.add_argument('-speed', '--show-speed', help='Plot the speed information from various sources', action='store_true')
     parser.add_argument('-acc', '--show-acc', help='Plot the acceleration information from IMU sources', action='store_true')
+    parser.add_argument('-stats', '--show-stats', help='Plot the localisation statistical information', action='store_true')
     parser.add_argument('-pos', '--show-position', help='Plot the position information from various sources', action='store_true')
     parser.add_argument('-pos-3d-gnss', '--show-3d-gnss', help='Plot the position information from GNSS sources in 3d', action='store_true')
     parser.add_argument('-pos-3d-odometry', '--show-3d-odometry', help='Plot the position information from odometry sources in 3d', action='store_true')
@@ -49,6 +52,7 @@ if __name__=="__main__":
                     args.show_speed or
                     args.show_yaw or
                     args.show_acc or
+                    args.show_stats or
                     args.show_yaw_rate or
                     args.show_pitch_roll or
                     args.show_3d_gnss or
@@ -83,6 +87,7 @@ if __name__=="__main__":
                                       imu=IMU(types.get('sensor_msgs/Imu', list())),
                                       odometry=Odometry(types.get('nav_msgs/Odometry', list())),
                                       gnss=GNSS(types.get('sensor_msgs/NavSatFix', list())),
+                                      statistics=Statistics(types.get('dataset_tools/LocaliserStats', list())),
                                       gnss_rates=GNSSRates(types.get('geometry_msgs/TwistWithCovarianceStamped', list())))
 
             # np.savetxt('/home/stew/gps.csv', gnss.data['/gps/fix'], delimiter=',')
@@ -93,8 +98,70 @@ if __name__=="__main__":
             if args.output_kml_file:
                 output_KML_file = args.output_kml_file
 
+            output_graph_folder = ''
+            output_graph_type = 'png'
+            output_graph_prefix = ''
+            if args.output_to_file:
+                output_graph_folder = args.output_to_file
+                output_graph_prefix = os.path.splitext(os.path.basename(bag_file_name))[0]
 
             FIXED_IMU_TIMING = 0.01
+
+            # plot localiser statistical information
+            if args.show_stats:
+                plt.figure()
+
+                plt.subplot(311)
+                #plt.hold(True)
+                plt.xlabel("time (s)")
+                plt.ylabel("Error (m)")
+
+                plt.subplot(312)
+                #plt.hold(True)
+                plt.xlabel("time (s)")
+                plt.ylabel("Error (m)")
+
+                plt.subplot(313)
+                #plt.hold(True)
+                plt.xlabel("time (s)")
+                plt.ylabel("Error (deg)")
+
+                plt.title("Localiser Statistics")
+
+                legend = []
+
+                for topic in container.statistics.topic_list:
+                    if len(container.statistics.data[topic]) > 0:
+                        plt.subplot(311)
+                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
+                                 np.abs(container.statistics.data[topic][:, container.statistics.INNOV_X]), '.-')
+                        legend.append(topic)
+
+                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
+                                 np.sqrt(container.statistics.data[topic][:, container.statistics.COVAR_X_X]), '-')
+                        legend.append(topic)
+
+                        plt.subplot(312)
+                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
+                                 np.abs(container.statistics.data[topic][:, container.statistics.INNOV_X]), '.-')
+                        legend.append(topic)
+
+                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
+                                 np.sqrt(container.statistics.data[topic][:, container.statistics.COVAR_Y_Y]), '-')
+                        legend.append(topic)
+
+                        plt.subplot(313)
+                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
+                                 np.abs(container.statistics.data[topic][:, container.statistics.INNOV_YAW]) * 180. / 3.1415, '.-')
+                        legend.append(topic)
+
+                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
+                                 np.sqrt(container.statistics.data[topic][:, container.statistics.COVAR_YAW_YAW]) * 180. / 3.1415, '-')
+                        legend.append(topic)
+
+                plt.legend(legend)
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".statistics." + output_graph_type, format=output_graph_type, dpi=600)
 
             # plot speed information
             if args.show_speed:
@@ -124,6 +191,8 @@ if __name__=="__main__":
                         legend.append(topic)
 
                 plt.legend(legend)
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".speed." + output_graph_type, format=output_graph_type, dpi=600)
 
 
             # plot acceleration rate information
@@ -162,6 +231,9 @@ if __name__=="__main__":
                         legend.append(topic)
 
                 plt.legend(legend)
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".accel." + output_graph_type, format=output_graph_type, dpi=600)
+
 
             # plot yaw rate information
             if args.show_yaw_rate:
@@ -193,6 +265,9 @@ if __name__=="__main__":
                         legend.append(topic)
 
                 plt.legend(legend)
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".yaw-rate." + output_graph_type, format=output_graph_type, dpi=600)
+
 
 
             # plot show_pitch_roll information
@@ -242,6 +317,8 @@ if __name__=="__main__":
                         legend.append(topic+"-attitude")
 
                 plt.legend(legend)
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".pitch-roll." + output_graph_type, format=output_graph_type, dpi=600)
 
             # plot show_yaw information
             if args.show_yaw:
@@ -278,6 +355,9 @@ if __name__=="__main__":
                         legend.append(topic)
 
                 plt.legend(legend)
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".yaw." + output_graph_type, format=output_graph_type, dpi=600)
+
 
             # plot position information
             if args.show_position:
@@ -371,9 +451,16 @@ if __name__=="__main__":
                 if len(legend) > 0:
                     plt.legend(legend)
 
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".position." + output_graph_type, format=output_graph_type, dpi=600)
+
+
 
             if len(output_KML_file) > 0:
-                container.output_KML_path(output_KML_file)
+                if len(output_graph_folder) > 0:
+                    container.output_KML_path(output_graph_folder + "/" + output_graph_prefix + "." + output_KML_file)
+                else:
+                    container.output_KML_path(output_KML_file)
 
             if args.show_3d_odometry:
                 for topic in container.odometry.topic_list:
@@ -403,6 +490,6 @@ if __name__=="__main__":
                 pa = PandasAnalysis()
                 pa.run_analysis(container)
 
-
-            plt.show()
+            if len(output_graph_folder) == 0:
+                plt.show()
 

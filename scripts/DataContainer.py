@@ -3,7 +3,12 @@ from BagDataType import *
 from IMU import IMU
 from GNSS import GNSS, GNSSRates
 from Odometry import Odometry
+from Statistics import Statistics
 from VehicleState import Velocity, Steering
+
+from dataset_tools.msg import LocaliserStats
+
+
 
 
 class DataContainer:
@@ -16,6 +21,7 @@ class DataContainer:
                  odometry=Odometry([]),
                  steering=Steering([]),
                  velocity=Velocity([]),
+                 statistics=Statistics([]),
                  target_speed_source=['/zio/odometry/rear', 'ibeo/odometry', '/IbeoROS/ibeo/odometry']):
 
         self.gnss = gnss
@@ -24,6 +30,7 @@ class DataContainer:
         self.odometry = odometry
         self.steering = steering
         self.velocity = velocity
+        self.statistics = statistics
 
         current_speed = 0.
 
@@ -55,6 +62,9 @@ class DataContainer:
             elif topic in self.gnss_rates.topic_list:
                 self.gnss_rates.new_message(topic, msg, t)
 
+            elif topic in self.statistics.topic_list:
+                self.statistics.new_message(topic, msg, t)
+
             elif topic in self.imu.topic_list:
                 self.imu.new_message(topic, msg, t, current_speed)
 
@@ -74,6 +84,7 @@ class DataContainer:
         self.imu.convert_numpy()
         self.odometry.convert_numpy()
         self.gnss.convert_numpy()
+        self.statistics.convert_numpy()
         self.gnss_rates.convert_numpy()
         self.velocity.convert_numpy()
         self.steering.convert_numpy()
