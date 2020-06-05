@@ -113,12 +113,13 @@ if __name__=="__main__":
                 for key in container.statistics.data.keys():
                     plt.figure()
 
-                    fig, axs = plt.subplots(1, 2, sharey=True, tight_layout=True)
+                    fig, axs = plt.subplots(1, 3, sharey=True, tight_layout=True)
 
                     # We can set the number of bins with the `bins` kwarg
                     n_bins = 50
                     axs[0].hist(container.statistics.data[key][:, container.statistics.INNOV_X], bins=n_bins)
                     axs[1].hist(container.statistics.data[key][:, container.statistics.INNOV_Y], bins=n_bins)
+                    axs[2].hist(container.statistics.data[key][:, container.statistics.INNOV_YAW], bins=n_bins)
 
                 plt.figure()
 
