@@ -109,6 +109,17 @@ if __name__=="__main__":
 
             # plot localiser statistical information
             if args.show_stats:
+
+                for key in container.statistics.data.keys():
+                    plt.figure()
+
+                    fig, axs = plt.subplots(1, 2, sharey=True, tight_layout=True)
+
+                    # We can set the number of bins with the `bins` kwarg
+                    n_bins = 50
+                    axs[0].hist(container.statistics.data[key][:, container.statistics.INNOV_X], bins=n_bins)
+                    axs[1].hist(container.statistics.data[key][:, container.statistics.INNOV_Y], bins=n_bins)
+
                 plt.figure()
 
                 plt.subplot(311)
@@ -130,34 +141,33 @@ if __name__=="__main__":
 
                 legend = []
 
-                for topic in container.statistics.topic_list:
-                    if len(container.statistics.data[topic]) > 0:
-                        plt.subplot(311)
-                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
-                                 np.abs(container.statistics.data[topic][:, container.statistics.INNOV_X]), '.-')
-                        legend.append(topic)
+                for key in container.statistics.data.keys():
+                    plt.subplot(311)
+                    plt.plot(container.statistics.data[key][:, container.statistics.TIME],
+                             np.abs(container.statistics.data[key][:, container.statistics.INNOV_X]), '*')
+                    legend.append("Innov X")
 
-                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
-                                 np.sqrt(container.statistics.data[topic][:, container.statistics.COVAR_X_X]), '-')
-                        legend.append(topic)
+                    plt.plot(container.statistics.data[key][:, container.statistics.TIME],
+                             np.sqrt(container.statistics.data[key][:, container.statistics.CONFIDENCE_X]), '.-')
+                    legend.append("Conf X")
 
-                        plt.subplot(312)
-                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
-                                 np.abs(container.statistics.data[topic][:, container.statistics.INNOV_X]), '.-')
-                        legend.append(topic)
+                    plt.subplot(312)
+                    plt.plot(container.statistics.data[key][:, container.statistics.TIME],
+                             np.abs(container.statistics.data[key][:, container.statistics.INNOV_Y]), '*')
+                    legend.append("Innov Y")
 
-                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
-                                 np.sqrt(container.statistics.data[topic][:, container.statistics.COVAR_Y_Y]), '-')
-                        legend.append(topic)
+                    plt.plot(container.statistics.data[key][:, container.statistics.TIME],
+                             np.sqrt(container.statistics.data[key][:, container.statistics.CONFIDENCE_Y]), '.-')
+                    legend.append("Conf Y")
 
-                        plt.subplot(313)
-                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
-                                 np.abs(container.statistics.data[topic][:, container.statistics.INNOV_YAW]) * 180. / 3.1415, '.-')
-                        legend.append(topic)
+                    plt.subplot(313)
+                    plt.plot(container.statistics.data[key][:, container.statistics.TIME],
+                             np.abs(container.statistics.data[key][:, container.statistics.INNOV_YAW]) * 180. / 3.1415, '*')
+                    legend.append("Innov Yaw")
 
-                        plt.plot(container.statistics.data[topic][:, container.statistics.TIME],
-                                 np.sqrt(container.statistics.data[topic][:, container.statistics.COVAR_YAW_YAW]) * 180. / 3.1415, '-')
-                        legend.append(topic)
+                    plt.plot(container.statistics.data[key][:, container.statistics.TIME],
+                             np.sqrt(container.statistics.data[key][:, container.statistics.CONFIDENCE_YAW]) * 180. / 3.1415, '.-')
+                    legend.append("Conf Yaw")
 
                 plt.legend(legend)
                 if len(output_graph_folder) > 0:
@@ -364,33 +374,15 @@ if __name__=="__main__":
                 plt.figure()
                 plt.suptitle("Position from various sources")
 
-                plt.subplot(221)
+                #plt.subplot(221)
                 #plt.hold(True)
                 plt.xlabel("x")
                 plt.ylabel("y")
                 plt.axis('equal')
 
-                plt.subplot(222)
-                #plt.hold(True)
-                plt.xlabel("east")
-                plt.ylabel("north")
-                plt.axis('equal')
-
-                plt.subplot(223)
-                #plt.hold(True)
-                plt.xlabel("GNSS east")
-                plt.ylabel("GNSS north")
-                plt.axis('equal')
-
-                plt.subplot(224)
-                #plt.hold(True)
-                plt.xlabel("east")
-                plt.ylabel("north")
-                plt.axis('equal')
-
                 legend = []
-                plt.subplot(221)
-                plt.axis('equal')
+                #plt.subplot(221)
+                #plt.axis('equal')
                 for topic in container.odometry.topic_list:
                     if len(container.odometry.data[topic]) > 0 and abs(container.odometry.data[topic][:, container.odometry.X][-1]) <= 100000:
                         plt.plot(container.odometry.data[topic][:, container.odometry.Y],
@@ -401,22 +393,22 @@ if __name__=="__main__":
                 if len(legend) > 0:
                     plt.legend(legend)
 
-                legend = []
-                plt.subplot(224)
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".position.fix." + output_graph_type, format=output_graph_type, dpi=600)
+
+                plt.figure()
+                plt.suptitle("Position from various sources")
+
+
+                #plt.subplot(222)
+                #plt.hold(True)
+                plt.xlabel("east")
+                plt.ylabel("north")
                 plt.axis('equal')
-                for topic in container.odometry.topic_list:
-                    if len(container.odometry.data[topic]) > 0 and abs(container.odometry.data[topic][:, container.odometry.X][-1]) > 100000:
-                        plt.plot(container.odometry.data[topic][:, container.odometry.X],
-                                 container.odometry.data[topic][:, container.odometry.Y], '.')
-
-                        legend.append(topic)
-
-                if len(legend) > 0:
-                    plt.legend(legend)
 
 
                 legend = []
-                plt.subplot(222)
+                #plt.subplot(222)
                 plt.axis('equal')
                 for topic in container.imu.topic_list:
                     if len(container.imu.data[topic]) > 0:
@@ -432,9 +424,27 @@ if __name__=="__main__":
                 if len(legend) > 0:
                     plt.legend(legend)
 
-                legend = []
-                plt.subplot(223)
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".position.dr." + output_graph_type, format=output_graph_type, dpi=600)
+
+
+                plt.figure()
+                plt.suptitle("Position from various sources")
+                #plt.subplot(223)
+                #plt.hold(True)
+                plt.xlabel("GNSS east")
+                plt.ylabel("GNSS north")
                 plt.axis('equal')
+
+                legend = []
+                #plt.subplot(223)
+                plt.axis('equal')
+
+                for key in container.statistics.data.keys():
+                    plt.plot(container.statistics.data[key][:, container.statistics.OBS_X],
+                             container.statistics.data[key][:, container.statistics.OBS_Y], '*')
+                    legend.append(key)
+
                 for topic in container.gnss.topic_list:
                     if len(container.gnss.data[topic]) > 0:
                         plt.plot(container.gnss.data[topic][:, container.gnss.EASTING],
@@ -447,12 +457,42 @@ if __name__=="__main__":
                                  container.odometry.data[topic][:, container.odometry.Y], '.-')
                         legend.append(topic)
 
+                if len(legend) > 0:
+                    plt.legend(legend)
+
+                if len(output_graph_folder) > 0:
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".position.abs_odom." + output_graph_type, format=output_graph_type, dpi=600)
+
+
+                plt.figure()
+                plt.suptitle("Position from various sources")
+                #plt.subplot(224)
+                #plt.hold(True)
+                plt.xlabel("east")
+                plt.ylabel("north")
+                plt.axis('equal')
+
+                legend = []
+                #plt.subplot(224)
+                plt.axis('equal')
+
+                for key in container.statistics.data.keys():
+                    plt.plot(container.statistics.data[key][:, container.statistics.OBS_X],
+                             container.statistics.data[key][:, container.statistics.OBS_Y], '*')
+                    legend.append(key)
+
+                for topic in container.odometry.topic_list:
+                    if len(container.odometry.data[topic]) > 0 and abs(container.odometry.data[topic][:, container.odometry.X][-1]) > 100000:
+                        plt.plot(container.odometry.data[topic][:, container.odometry.X],
+                                 container.odometry.data[topic][:, container.odometry.Y], '.')
+
+                        legend.append(topic)
 
                 if len(legend) > 0:
                     plt.legend(legend)
 
                 if len(output_graph_folder) > 0:
-                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".position." + output_graph_type, format=output_graph_type, dpi=600)
+                    plt.savefig(output_graph_folder + "/" + output_graph_prefix + ".position.odom." + output_graph_type, format=output_graph_type, dpi=600)
 
 
 
