@@ -5,10 +5,10 @@ from GNSS import GNSS, GNSSRates
 from Odometry import Odometry
 from Statistics import Statistics
 from VehicleState import Velocity, Steering
+from VehicleCommands import Ackermann, TwistCommand
+from JointStates import JointStates
 
 from dataset_tools.msg import LocaliserStats
-
-
 
 
 class DataContainer:
@@ -22,6 +22,9 @@ class DataContainer:
                  steering=Steering([]),
                  velocity=Velocity([]),
                  statistics=Statistics([]),
+                 ackermann=Ackermann([]),
+                 twist=TwistCommand([]),
+                 joint_states=JointStates([]),
                  target_speed_source=['/zio/odometry/rear', 'ibeo/odometry', '/IbeoROS/ibeo/odometry']):
 
         self.gnss = gnss
@@ -31,6 +34,9 @@ class DataContainer:
         self.steering = steering
         self.velocity = velocity
         self.statistics = statistics
+        self.ackermann = ackermann
+        self.twist = twist
+        self.joint_states = joint_states
 
         current_speed = 0.
 
@@ -79,6 +85,18 @@ class DataContainer:
             elif topic in self.steering.topic_list and msg.name[0] == 'front_left_wheel':
                 self.velocity.new_message(topic, msg, t)
 
+            # ackermann commands
+            elif topic in self.ackermann.topic_list:
+                self.ackermann.new_message(topic, msg, t)
+
+            # twist commands
+            elif topic in self.twist.topic_list:
+                self.twist.new_message(topic, msg, t)
+
+            # joint states message
+            elif topic in self.joint_states.topic_list:
+                self.joint_states.new_message(topic, msg, t)
+
         bag.close()
 
         self.imu.convert_numpy()
@@ -88,6 +106,9 @@ class DataContainer:
         self.gnss_rates.convert_numpy()
         self.velocity.convert_numpy()
         self.steering.convert_numpy()
+        self.ackermann.convert_numpy()
+        self.twist.convert_numpy()
+        self.joint_states.convert_numpy()
 
         if len(self.datum) > 0:
             self.odometry.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
