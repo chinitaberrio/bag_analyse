@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   dataset_tools
 )
 
+catkin_python_setup()
 
 ###################################
 ## catkin specific configuration ##
@@ -42,18 +43,18 @@ include_directories(
 
 
 catkin_install_python(PROGRAMS
-	scripts/BagDB.py
-	scripts/BagDBAnalysis.py
-	scripts/BagDataType.py
-	scripts/DataContainer.py
+  #	scripts/BagDB.py
+  # scripts/BagDBAnalysis.py
+  # scripts/BagDataType.py
+  # scripts/DataContainer.py
 	scripts/bag-analyse.py
 	scripts/rosbag-analysis.py
-	scripts/GNSS.py
-    scripts/IMU.py
-    scripts/Odometry.py
-    scripts/VehicleState.py
-	scripts/PandasAnalysis.py
-	scripts/Statistics.py
+  # scripts/GNSS.py
+  # scripts/IMU.py
+  # scripts/Odometry.py
+  # scripts/VehicleState.py
+  # scripts/PandasAnalysis.py
+  # scripts/Statistics.py
 
 
 		DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
