@@ -9,14 +9,14 @@ import os
 import numpy as np
 import pandas as pd
 
-from IMU import IMU
-from GNSS import GNSS, GNSSRates
-from Statistics import Statistics
-from Odometry import Odometry
-from PandasAnalysis import PandasAnalysis
-from VehicleState import Velocity, Steering
+from bag_analysis.IMU import IMU
+from bag_analysis.GNSS import GNSS, GNSSRates
+from bag_analysis.Statistics import Statistics
+from bag_analysis.Odometry import Odometry
+from bag_analysis.PandasAnalysis import PandasAnalysis
+from bag_analysis.VehicleState import Velocity, Steering
 
-from DataContainer import DataContainer
+from bag_analysis.DataContainer import DataContainer
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import pyplot as plt
