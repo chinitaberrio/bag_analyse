@@ -7,6 +7,7 @@ from Statistics import Statistics
 from VehicleState import Velocity, Steering
 from VehicleCommands import Ackermann, TwistCommand
 from JointStates import JointStates
+from ControllerDebug import TorqueControllerDebug
 
 from dataset_tools.msg import LocaliserStats
 
@@ -25,6 +26,7 @@ class DataContainer:
                  ackermann=Ackermann([]),
                  twist=TwistCommand([]),
                  joint_states=JointStates([]),
+                 torque_controller_debug=TorqueControllerDebug([]),
                  target_speed_source=['/zio/odometry/rear', 'ibeo/odometry', '/IbeoROS/ibeo/odometry']):
 
         self.gnss = gnss
@@ -37,6 +39,7 @@ class DataContainer:
         self.ackermann = ackermann
         self.twist = twist
         self.joint_states = joint_states
+        self.torque_controller_debug = torque_controller_debug
 
         current_speed = 0.
 
@@ -97,6 +100,10 @@ class DataContainer:
             elif topic in self.joint_states.topic_list:
                 self.joint_states.new_message(topic, msg, t)
 
+            # controller debug information
+            elif topic in self.torque_controller_debug.topic_list:
+                self.torque_controller_debug.new_message(topic, msg, t)
+
         bag.close()
 
         self.imu.convert_numpy()
@@ -109,6 +116,7 @@ class DataContainer:
         self.ackermann.convert_numpy()
         self.twist.convert_numpy()
         self.joint_states.convert_numpy()
+        self.torque_controller_debug.convert_numpy()
 
         if len(self.datum) > 0:
             self.odometry.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
