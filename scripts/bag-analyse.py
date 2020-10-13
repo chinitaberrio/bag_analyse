@@ -386,8 +386,8 @@ if __name__=="__main__":
                 #plt.axis('equal')
                 for topic in container.odometry.topic_list:
                     if len(container.odometry.data[topic]) > 0 and abs(container.odometry.data[topic][:, container.odometry.X][-1]) <= 100000:
-                        plt.plot(container.odometry.data[topic][:, container.odometry.Y],
-                                 container.odometry.data[topic][:, container.odometry.X] * -1., '.')
+                        plt.plot(container.odometry.data[topic][:, container.odometry.X],
+                                 container.odometry.data[topic][:, container.odometry.Y], '.')
 
                         legend.append(topic)
 
