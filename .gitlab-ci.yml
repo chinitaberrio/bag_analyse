@@ -28,7 +28,7 @@ build:
 
 deploy:
   only:
-    - demo/TfNSW_October_2020
+    - master
   stage: deploy
   dependencies:
     - build
