@@ -1,23 +1,45 @@
-# When using dind, it's wise to use the overlayfs driver for
-# improved performance.
+image: acfr/ros-build:melodic
 variables:
+  ROS_DISTRO: "melodic"
+  UBUNTU_DISTRO: "bionic"
+  CI_SOURCE_PATH: "$CI_PROJECT_DIR"
+  ROS_PARALLEL_JOBS: "-j8 -l6"
   GIT_DEPTH: "3"
-  GIT_SUBMODULE_STRATEGY: "recursive"
+  GIT_STRATEGY: clone
+  GIT_SUBMODULE_STRATEGY: recursive
   GIT_SSL_NO_VERIFY: "true"
-#  DOCKER_DRIVER: overlay
-stages:
-  - docker-build
 
-docker-build:
-  image: docker:latest
-  services:
-    - docker:dind
+
+stages:
+  - build
+  - deploy
+
+build:
   tags:
     - dind
-  stage: docker-build
+  stage: build
   script:
-  # Begin the Docker build
-  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-  - docker build -t "$CI_REGISTRY/$CI_PROJECT_PATH:latest" .
-  - docker push "$CI_REGISTRY/$CI_PROJECT_PATH:latest"
+    - wget http://acfr-ros-pro-1.srv.sydney.edu.au:4440/build-ros-deb_rosdep.sh
+    - chmod +x ./build-ros-deb_rosdep.sh
+    - ./build-ros-deb_rosdep.sh
+  artifacts:
+    paths:
+      - debs
+
+deploy:
+  only:
+    - demo/TfNSW_October_2020
+  stage: deploy
+  dependencies:
+    - build
+  script:
+    - cd debs
+    - if [ $CI_PROJECT_NAMESPACE == 'its' ];
+        then find . -name '*.deb' -print0 | xargs -0 -n1 basename | while read DEB;
+        do dpkg-deb -I "$DEB" ;
+        curl -f -X POST -F file=@"$DEB" "http://aptly-submit:${APTLY_PASSWORD}@acfr-ros-pro-1.srv.sydney.edu.au:4441/api/files/incoming_pkgs_${ROS_DISTRO}" ;
+        curl -f -X POST "http://aptly-submit:${APTLY_PASSWORD}@acfr-ros-pro-1.srv.sydney.edu.au:4441/api/repos/zio-${ROS_DISTRO}/file/incoming_pkgs_${ROS_DISTRO}" ;
+        curl -f -X PUT "http://aptly-submit:${APTLY_PASSWORD}@acfr-ros-pro-1.srv.sydney.edu.au:4441/api/publish/zio-${ROS_DISTRO}/${UBUNTU_DISTRO}" ;
+        done ;
+        fi
 
