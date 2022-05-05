@@ -9,7 +9,7 @@ from VehicleCommands import Ackermann, TwistCommand
 from JointStates import JointStates
 from ControllerDebug import TorqueControllerDebug
 
-from dataset_tools.msg import LocaliserStats
+from dataset_msgs.msg import LocaliserStats
 
 
 class DataContainer:
