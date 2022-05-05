@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 import sys
 import math
+import yaml
+import copy
 import rospy
 import rosbag
 import glob
@@ -8,6 +10,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 
 from bag_analysis.IMU import IMU
 from bag_analysis.GNSS import GNSS, GNSSRates
@@ -43,6 +46,7 @@ if __name__=="__main__":
     parser.add_argument('-pos-3d-odometry', '--show-3d-odometry', help='Plot the position information from odometry sources in 3d', action='store_true')
 
     parser.add_argument('-pandas', '--run-pandas', help='[DEVEL] run pandas scripts', action='store_true')
+    parser.add_argument('-time-sync', '--synchronise-data', help='[DEVEL] optimise the time difference between two data types. This is currently hardcoded to correct the odometry from the vehicle compared to the separate IMU', action='store_true')
 
     args = parser.parse_args()
 
@@ -51,6 +55,7 @@ if __name__=="__main__":
         if not (args.show_position or
                     args.show_speed or
                     args.show_yaw or
+                    args.synchronise_data or
                     args.show_acc or
                     args.show_stats or
                     args.show_yaw_rate or
@@ -99,13 +104,57 @@ if __name__=="__main__":
                 output_KML_file = args.output_kml_file
 
             output_graph_folder = ''
-            output_graph_type = 'png'
+            output_graph_type = 'eps'
             output_graph_prefix = ''
             if args.output_to_file:
                 output_graph_folder = args.output_to_file
                 output_graph_prefix = os.path.splitext(os.path.basename(bag_file_name))[0]
 
             FIXED_IMU_TIMING = 0.01
+
+            if args.synchronise_data:
+
+                # in the recent ibeo data (>2019) the ibeo/odometry is far ahead in time compared to the xsens
+                # ibeo/odometry - adjustment = xsens
+                # we need to find this adjustment and apply
+
+                # find the coarse time offset from the last timestamps of each dataset
+                coarse_offset = container.odometry.data['ibeo/odometry'][-1, container.odometry.TIME] - container.imu.data['xsens/IMU'][-1, container.imu.TIME]
+                print("coarse timing difference is " + str(coarse_offset))
+
+                time_index_a = container.imu.data['xsens/IMU'][:, container.imu.TIME]
+                a = pd.Series(container.imu.data['xsens/IMU'][:, container.imu.YAW_RATE], index=time_index_a)
+
+                def cost_fun(delta_time):
+                    time_index_b = container.odometry.data['ibeo/odometry'][:, container.odometry.TIME] - coarse_offset + delta_time
+                    b = pd.Series(container.odometry.data['ibeo/odometry'][:, container.odometry.YAW_RATE], index=time_index_b)
+                    b_frame = pd.DataFrame({'b':b, 'a':a})
+
+                    d = b_frame.interpolate('index')
+                    e = d.corr()
+
+                    #print(str(delta_time[0]) + ", " + str(e['a']['b']))
+                    return -1. * e['a']['b']
+
+                initial_value = 0.
+                res = minimize(cost_fun, [initial_value], options={"maxiter":100, "disp":True, 'eps':0.01})
+
+
+                if len(output_graph_folder) > 0:
+                    output_dict = dict(res)
+                    output_dict['x'] = float(res.x[0])
+                    output_dict['coarse_time_offset'] = float(coarse_offset)
+                    output_dict['total_time_offset'] = float(-coarse_offset + res.x[0])
+
+                    with open(output_graph_folder + "/" + output_graph_prefix + ".time.yaml", 'w') as file:
+                        yaml.dump(output_dict, file)
+
+                print(res)
+
+                container.odometry.data['ibeo/odometry/time_sync'] = copy.deepcopy(container.odometry.data['ibeo/odometry'])
+                container.odometry.data['ibeo/odometry/time_sync'][:, container.odometry.TIME] = container.odometry.data['ibeo/odometry/time_sync'][:, container.odometry.TIME] - coarse_offset + res.x[0]
+                container.odometry.topic_list.append('ibeo/odometry/time_sync')
+
 
             # plot localiser statistical information
             if args.show_stats:
