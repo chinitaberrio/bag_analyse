@@ -124,10 +124,12 @@ if __name__=="__main__":
 
                 time_index_a = container.imu.data['xsens/IMU'][:, container.imu.TIME]
                 a = pd.Series(container.imu.data['xsens/IMU'][:, container.imu.YAW_RATE], index=time_index_a)
+                a = a[~a.index.duplicated()] 
 
                 def cost_fun(delta_time):
                     time_index_b = container.odometry.data['ibeo/odometry'][:, container.odometry.TIME] - coarse_offset + delta_time
                     b = pd.Series(container.odometry.data['ibeo/odometry'][:, container.odometry.YAW_RATE], index=time_index_b)
+                    b = b[~b.index.duplicated()]
                     b_frame = pd.DataFrame({'b':b, 'a':a})
 
                     d = b_frame.interpolate('index')
