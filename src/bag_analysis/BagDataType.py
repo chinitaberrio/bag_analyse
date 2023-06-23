@@ -39,7 +39,7 @@ class BagDataType:
 
         path = []
         for east, north in zip(east_vector, north_vector):
-            lat, lon = utm.to_latlon(east + east_base, north + north_base, zone, letter)
+            lat, lon = utm.to_latlon(east - east_base, north - north_base, zone, letter)
             path.append((lon, lat))
 
         ls.coords = path

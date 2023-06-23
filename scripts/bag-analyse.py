@@ -119,16 +119,16 @@ if __name__=="__main__":
                 # we need to find this adjustment and apply
 
                 # find the coarse time offset from the last timestamps of each dataset
-                coarse_offset = container.odometry.data['ibeo/odometry'][-1, container.odometry.TIME] - container.imu.data['xsens/IMU'][-1, container.imu.TIME]
+                coarse_offset = container.odometry.data['/ibeo_interface_node/ibeo/odometry'][-1, container.odometry.TIME] - container.imu.data['/ibeo_interface_node/xsens/IMU'][-1, container.imu.TIME]
                 print("coarse timing difference is " + str(coarse_offset))
 
-                time_index_a = container.imu.data['xsens/IMU'][:, container.imu.TIME]
-                a = pd.Series(container.imu.data['xsens/IMU'][:, container.imu.YAW_RATE], index=time_index_a)
+                time_index_a = container.imu.data['/ibeo_interface_node/xsens/IMU'][:, container.imu.TIME]
+                a = pd.Series(container.imu.data['/ibeo_interface_node/xsens/IMU'][:, container.imu.YAW_RATE], index=time_index_a)
                 a = a[~a.index.duplicated()] 
 
                 def cost_fun(delta_time):
-                    time_index_b = container.odometry.data['ibeo/odometry'][:, container.odometry.TIME] - coarse_offset + delta_time
-                    b = pd.Series(container.odometry.data['ibeo/odometry'][:, container.odometry.YAW_RATE], index=time_index_b)
+                    time_index_b = container.odometry.data['/ibeo_interface_node/ibeo/odometry'][:, container.odometry.TIME] - coarse_offset + delta_time
+                    b = pd.Series(container.odometry.data['/ibeo_interface_node/ibeo/odometry'][:, container.odometry.YAW_RATE], index=time_index_b)
                     b = b[~b.index.duplicated()]
                     b_frame = pd.DataFrame({'b':b, 'a':a})
 
@@ -141,6 +141,7 @@ if __name__=="__main__":
                 initial_value = 0.
                 res = minimize(cost_fun, [initial_value], options={"maxiter":100, "disp":True, 'eps':0.01})
 
+                print("graph " ,output_graph_folder , " prefix ", output_graph_prefix)
 
                 if len(output_graph_folder) > 0:
                     output_dict = dict(res)
@@ -153,9 +154,9 @@ if __name__=="__main__":
 
                 print(res)
 
-                container.odometry.data['ibeo/odometry/time_sync'] = copy.deepcopy(container.odometry.data['ibeo/odometry'])
-                container.odometry.data['ibeo/odometry/time_sync'][:, container.odometry.TIME] = container.odometry.data['ibeo/odometry/time_sync'][:, container.odometry.TIME] - coarse_offset + res.x[0]
-                container.odometry.topic_list.append('ibeo/odometry/time_sync')
+                container.odometry.data['/ibeo_interface_node/ibeo/odometry/time_sync'] = copy.deepcopy(container.odometry.data['/ibeo_interface_node/ibeo/odometry'])
+                container.odometry.data['/ibeo_interface_node/ibeo/odometry/time_sync'][:, container.odometry.TIME] = container.odometry.data['/ibeo_interface_node/ibeo/odometry/time_sync'][:, container.odometry.TIME] - coarse_offset + res.x[0]
+                container.odometry.topic_list.append('/ibeo_interface_node/ibeo/odometry/time_sync')
 
 
             # plot localiser statistical information
