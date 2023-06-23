@@ -17,7 +17,6 @@ from bag_analysis.GNSS import GNSS, GNSSRates
 from bag_analysis.Statistics import Statistics
 from bag_analysis.Odometry import Odometry
 from bag_analysis.PandasAnalysis import PandasAnalysis
-from bag_analysis.VehicleState import Velocity, Steering
 
 from bag_analysis.DataContainer import DataContainer
 
@@ -87,16 +86,12 @@ if __name__=="__main__":
                 types[value.msg_type].append(key)
 
             container = DataContainer(ros_bag,
-                                      steering=Steering([]),
-                                      velocity=Velocity([]),
                                       imu=IMU(types.get('sensor_msgs/Imu', list())),
                                       odometry=Odometry(types.get('nav_msgs/Odometry', list())),
                                       gnss=GNSS(types.get('sensor_msgs/NavSatFix', list())),
                                       statistics=Statistics(types.get('dataset_tools/LocaliserStats', list())),
                                       gnss_rates=GNSSRates(types.get('geometry_msgs/TwistWithCovarianceStamped', list())))
 
-            # np.savetxt('/home/stew/gps.csv', gnss.data['/gps/fix'], delimiter=',')
-            # np.savetxt('/home/stew/gpsf.csv', gnss.data['/gps/filtered'], delimiter=',')
 
             # outputs to KML only if this variable is not an empty string
             output_KML_file = ''
@@ -113,10 +108,6 @@ if __name__=="__main__":
             FIXED_IMU_TIMING = 0.01
 
             if args.synchronise_data:
-
-                # in the recent ibeo data (>2019) the ibeo/odometry is far ahead in time compared to the xsens
-                # ibeo/odometry - adjustment = xsens
-                # we need to find this adjustment and apply
 
                 # find the coarse time offset from the last timestamps of each dataset
                 coarse_offset = container.odometry.data['/ibeo_interface_node/ibeo/odometry'][-1, container.odometry.TIME] - container.imu.data['/ibeo_interface_node/xsens/IMU'][-1, container.imu.TIME]
@@ -135,7 +126,6 @@ if __name__=="__main__":
                     d = b_frame.interpolate('index')
                     e = d.corr()
 
-                    #print(str(delta_time[0]) + ", " + str(e['a']['b']))
                     return -1. * e['a']['b']
 
                 initial_value = 0.
@@ -176,17 +166,14 @@ if __name__=="__main__":
                 plt.figure()
 
                 plt.subplot(311)
-                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("Error (m)")
 
                 plt.subplot(312)
-                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("Error (m)")
 
                 plt.subplot(313)
-                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("Error (deg)")
 
@@ -264,17 +251,14 @@ if __name__=="__main__":
                 plt.suptitle("Acceleration from IMU")
 
                 plt.subplot(311)
-                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("X acceleration (m/s^2)")
 
                 plt.subplot(312)
-                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("Y acceleration (m/s^2)")
 
                 plt.subplot(313)
-                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("Z acceleration (m/s^2)")
 
@@ -387,7 +371,6 @@ if __name__=="__main__":
             if args.show_yaw:
                 plt.figure()
                 plt.title("Yaw from various sources")
-                #plt.hold(True)
                 plt.xlabel("time (s)")
                 plt.ylabel("yaw angle (rad)")
 
@@ -427,15 +410,12 @@ if __name__=="__main__":
                 plt.figure()
                 plt.suptitle("Position from various sources")
 
-                #plt.subplot(221)
-                #plt.hold(True)
                 plt.xlabel("x")
                 plt.ylabel("y")
                 plt.axis('equal')
 
                 legend = []
-                #plt.subplot(221)
-                #plt.axis('equal')
+
                 for topic in container.odometry.topic_list:
                     if len(container.odometry.data[topic]) > 0 and abs(container.odometry.data[topic][:, container.odometry.X][-1]) <= 100000:
                         plt.plot(container.odometry.data[topic][:, container.odometry.X],
@@ -452,16 +432,12 @@ if __name__=="__main__":
                 plt.figure()
                 plt.suptitle("Position from various sources")
 
-
-                #plt.subplot(222)
-                #plt.hold(True)
                 plt.xlabel("east")
                 plt.ylabel("north")
                 plt.axis('equal')
 
 
                 legend = []
-                #plt.subplot(222)
                 plt.axis('equal')
                 for topic in container.imu.topic_list:
                     if len(container.imu.data[topic]) > 0:
@@ -483,14 +459,11 @@ if __name__=="__main__":
 
                 plt.figure()
                 plt.suptitle("Position from various sources")
-                #plt.subplot(223)
-                #plt.hold(True)
                 plt.xlabel("GNSS east")
                 plt.ylabel("GNSS north")
                 plt.axis('equal')
 
                 legend = []
-                #plt.subplot(223)
                 plt.axis('equal')
 
                 for key in container.statistics.data.keys():
@@ -519,14 +492,11 @@ if __name__=="__main__":
 
                 plt.figure()
                 plt.suptitle("Position from various sources")
-                #plt.subplot(224)
-                #plt.hold(True)
                 plt.xlabel("east")
                 plt.ylabel("north")
                 plt.axis('equal')
 
                 legend = []
-                #plt.subplot(224)
                 plt.axis('equal')
 
                 for key in container.statistics.data.keys():
@@ -561,7 +531,6 @@ if __name__=="__main__":
                         fig = plt.figure()
                         fig.suptitle('3-Dimensional ' + topic + ' position')
                         ax = fig.add_subplot(111, projection='3d')
-                        #plt.hold(True)
                         plt.axis('equal')
                         plt.plot(container.odometry.data[topic][:, container.odometry.X],
                                  container.odometry.data[topic][:, container.odometry.Y],
@@ -573,7 +542,6 @@ if __name__=="__main__":
                         fig = plt.figure()
                         fig.suptitle('3-Dimensional ' + topic + ' position')
                         ax = fig.add_subplot(111, projection='3d')
-                        #plt.hold(True)
                         plt.axis('equal')
                         plt.plot(container.gnss.data[topic][:, container.gnss.EASTING],
                                  container.gnss.data[topic][:, container.gnss.NORTHING],

@@ -6,8 +6,6 @@ from matplotlib import pyplot as plt
 from IMU import IMU
 from GNSS import GNSS, GNSSRates
 from Odometry import Odometry
-from VehicleState import Velocity, Steering
-
 from DataContainer import DataContainer
 
 
@@ -27,8 +25,6 @@ class PandasAnalysis:
         odo_speed = pd.Series(data=container.odometry.data[odo_topic][:, container.odometry.SPEED],
                                index=container.odometry.data[odo_topic][:, container.odometry.TIME])
 
-        #rospy.loginfo(gnss_speed)
-        #rospy.loginfo(odo_speed)
 
         plt.figure()
         plt.subplot(231)
@@ -88,7 +84,3 @@ class PandasAnalysis:
         plt.ylabel("heading rad")
         np.abs(gnss_yaw_rate - reindexed_yaw_rate).plot(style='*')
 
-
-
-        #plt.plot(gnss_speed.index, gnss_speed.data)
-        #plt.plot(odo_speed.index, odo_speed.data)

@@ -1,10 +1,10 @@
 # ROS bag analysis scripts
 
-## This project contains scripts which query the rosbag database and plot some results. These scripts were used to generate the graphs presented to Renault in the project report.
+### Within this project, there are scripts designed to retrieve data from the rosbag specifically related to positioning. These scripts generate graphical representations of the vehicle's position and trajectory based on the collected sensor data. 
 
 ### rosbag-analysis.py
 
-This script connects to the bag database and performs some specific anaysis that was used to generate the report for Renault - one for outputting all traces to KML, one for plotting z-acceleration and velocity for a small area near the university and one for plotting a velocity analysis of vehicles driving over the harbour bridge
+These scripts read the rosbag file and conducts detailed analysis on various sensors installed in the vehicle. It extracts relevant information from the sensor data and performs specific calculations or computations to gain insights into their performance or behavior. This analysis aims to provide a comprehensive understanding of the sensors' functionality and their impact on the overall vehicle localisation system.
 
 ### bag-analyse.py
 

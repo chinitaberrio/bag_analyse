@@ -4,10 +4,6 @@ from IMU import IMU
 from GNSS import GNSS, GNSSRates
 from Odometry import Odometry
 from Statistics import Statistics
-from VehicleState import Velocity, Steering
-from VehicleCommands import Ackermann, TwistCommand
-from JointStates import JointStates
-from ControllerDebug import TorqueControllerDebug
 
 from dataset_msgs.msg import LocaliserStats
 
@@ -20,26 +16,15 @@ class DataContainer:
                  gnss_rates=GNSSRates([]),
                  imu=IMU([]),
                  odometry=Odometry([]),
-                 steering=Steering([]),
-                 velocity=Velocity([]),
                  statistics=Statistics([]),
-                 ackermann=Ackermann([]),
-                 twist=TwistCommand([]),
-                 joint_states=JointStates([]),
-                 torque_controller_debug=TorqueControllerDebug([]),
-                 target_speed_source=['/zio/odometry/rear', 'ibeo/odometry', '/IbeoROS/ibeo/odometry']):
+                 target_speed_source=['ibeo/odometry', '/novatel/oem7/odom']):
 
         self.gnss = gnss
         self.gnss_rates = gnss_rates
         self.imu = imu
         self.odometry = odometry
-        self.steering = steering
-        self.velocity = velocity
+  
         self.statistics = statistics
-        self.ackermann = ackermann
-        self.twist = twist
-        self.joint_states = joint_states
-        self.torque_controller_debug = torque_controller_debug
 
         current_speed = 0.
 
@@ -47,11 +32,6 @@ class DataContainer:
 
         for topic, msg, t in bag.read_messages():
 
-            # pick only the times where the vehicle was moving GOING OUT
-            # if (t.to_sec() < 30+1.49678753e9 or t.to_sec() > 75+1.49678753e9):
-            #    continue
-
-            #print (topic, self.imu.topic_list)
 
             if topic in target_speed_source:
                 current_speed = msg.twist.twist.linear.x
@@ -80,29 +60,6 @@ class DataContainer:
             elif topic in self.odometry.topic_list:
                 self.odometry.new_message(topic, msg, t)
 
-            # the steering wheel messages name starts with 'left_steering'
-            elif topic in self.steering.topic_list and msg.name[0] == 'left_steering':
-                self.steering.new_message(topic, msg, t)
-
-            # the wheel velocity messages name starts with 'front_left_wheel'
-            elif topic in self.steering.topic_list and msg.name[0] == 'front_left_wheel':
-                self.velocity.new_message(topic, msg, t)
-
-            # ackermann commands
-            elif topic in self.ackermann.topic_list:
-                self.ackermann.new_message(topic, msg, t)
-
-            # twist commands
-            elif topic in self.twist.topic_list:
-                self.twist.new_message(topic, msg, t)
-
-            # joint states message
-            elif topic in self.joint_states.topic_list:
-                self.joint_states.new_message(topic, msg, t)
-
-            # controller debug information
-            elif topic in self.torque_controller_debug.topic_list:
-                self.torque_controller_debug.new_message(topic, msg, t)
 
         bag.close()
 
@@ -111,12 +68,8 @@ class DataContainer:
         self.gnss.convert_numpy()
         self.statistics.convert_numpy()
         self.gnss_rates.convert_numpy()
-        self.velocity.convert_numpy()
-        self.steering.convert_numpy()
-        self.ackermann.convert_numpy()
-        self.twist.convert_numpy()
-        self.joint_states.convert_numpy()
-        self.torque_controller_debug.convert_numpy()
+   
+    
 
         if len(self.datum) > 0:
             self.odometry.recalculate_odometry_2d(self.datum[5] + math.pi / 2.)
@@ -136,9 +89,7 @@ class DataContainer:
 
         for topic in self.odometry.topic_list:
             if len(self.odometry.data[topic]) > 0:
-                #if ('gps' in topic or
-                #        'gnss' in topic or
-                #        'ukf/odometry' in topic):
+
                 if abs(self.odometry.data[topic][:, self.odometry.X][-1]) >= 100000:
                     print('KML output topic with gps/gnss/ukf odometry ' + str(topic))
                     self.odometry.add_KML_path(kml,

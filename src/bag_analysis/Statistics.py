@@ -2,7 +2,6 @@ import tf
 import math
 import numpy as np
 
-#from BagDataType import BagDataType
 
 # IMU has an additional field which is filled in with the latest speed measurement
 #  This enables the recalculation of odometry information using yaw and speed

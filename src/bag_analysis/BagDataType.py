@@ -27,7 +27,6 @@ class BagDataType:
 
         for (t, x, y, z, roll, pitch, yaw, v, yaw_rate), dt in zip(odometry[1:, :], deltas):
             if not stationary_constraint or v > 0.:
-                #dt = 0.1
                 cumulative_theta += dt * yaw_rate
                 cumulative_x += math.cos(cumulative_theta) * v * dt
                 cumulative_y += math.sin(cumulative_theta) * v * dt
