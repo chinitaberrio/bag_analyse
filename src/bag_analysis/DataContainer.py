@@ -43,8 +43,8 @@ class DataContainer:
                 if len(self.datum) == 0 \
                         and topic in self.gnss.data \
                         and len(self.gnss.data[topic]) > 0 \
-                        and self.gnss.data[topic][-1][self.gnss.EASTING] > 300000 \
-                        and self.gnss.data[topic][-1][self.gnss.EASTING] < 350000 \
+                        and self.gnss.data[topic][-1][self.gnss.EASTING] > 166640 \
+                        and self.gnss.data[topic][-1][self.gnss.EASTING] < 833360 \
                         and self.gnss.data[topic][-1][self.gnss.HEADING] != 0.0:
                     self.datum = np.array(self.gnss.data[topic][-1])
 
@@ -84,25 +84,25 @@ class DataContainer:
     def output_KML_path(self, file_name):
         # output the paths to KML
         east_base, north_base, zone, letter = utm.from_latlon(self.datum[6], self.datum[7])
-        print ('east north base ' + str(east_base) + ", " + str(north_base))
+        print ('east north base zone ' + str(east_base) + ", " + str(north_base) + ", " + str(zone))
         kml = simplekml.Kml()
 
-        for topic in self.odometry.topic_list:
-            if len(self.odometry.data[topic]) > 0:
+        #for topic in self.odometry.topic_list:
+        #    if len(self.odometry.data[topic]) > 0:
 
-                if abs(self.odometry.data[topic][:, self.odometry.X][-1]) >= 100000:
-                    print('KML output topic with gps/gnss/ukf odometry ' + str(topic))
-                    self.odometry.add_KML_path(kml,
-                                            topic,
-                                            0, self.odometry.data[topic][:, self.odometry.X],
-                                            0, self.odometry.data[topic][:, self.odometry.Y],
-                                            simplekml.Color.green, zone, letter)
-                else:
-                    self.odometry.add_KML_path(kml,
-                                            topic,
-                                            east_base, self.odometry.data[topic][:, self.odometry.Y],
-                                            north_base, self.odometry.data[topic][:, self.odometry.X] * -1.,
-                                            simplekml.Color.green, zone, letter)
+        #        if abs(self.odometry.data[topic][:, self.odometry.X][-1]) >= 100000:
+        #            print('KML output topic with gps/gnss/ukf odometry ' + str(topic))
+        #            self.odometry.add_KML_path(kml,
+        #                                    topic,
+        #                                    0, self.odometry.data[topic][:, self.odometry.X],
+        #                                    0, self.odometry.data[topic][:, self.odometry.Y],
+        #                                    simplekml.Color.green, zone, letter)
+        #        else:
+        #            self.odometry.add_KML_path(kml,
+        #                                    topic,
+        #                                    east_base, self.odometry.data[topic][:, self.odometry.Y],
+        #                                    north_base, self.odometry.data[topic][:, self.odometry.X] * -1.,
+        #                                    simplekml.Color.green, zone, letter)
 
 
         for topic in self.gnss.topic_list:
@@ -114,18 +114,18 @@ class DataContainer:
                                         0, self.gnss.data[topic][:, self.gnss.NORTHING],
                                         simplekml.Color.red, zone, letter)
 
-        for topic in self.imu.topic_list:
-            if len(self.imu.data[topic]) > 0:
-                print('KML item on imu list ' + str(topic))
-                self.imu.add_KML_path(kml, topic + '-gyro',
-                                       east_base, self.imu.gyro_path[topic][:, self.imu.PATH_Y],
-                                       north_base, self.imu.gyro_path[topic][:, self.imu.PATH_X] * -1.,
-                                       simplekml.Color.yellow, zone, letter)
+        #for topic in self.imu.topic_list:
+        #    if len(self.imu.data[topic]) > 0:
+        #        print('KML item on imu list ' + str(topic))
+        #        self.imu.add_KML_path(kml, topic + '-gyro',
+        #                               east_base, self.imu.gyro_path[topic][:, self.imu.PATH_Y],
+        #                               north_base, self.imu.gyro_path[topic][:, self.imu.PATH_X] * -1.,
+        #                               simplekml.Color.yellow, zone, letter)
 
-                self.imu.add_KML_path(kml, topic + '-attitude',
-                                       east_base, self.imu.attitude_path[topic][:, self.imu.PATH_Y],
-                                       north_base, self.imu.attitude_path[topic][:, self.imu.PATH_X] * -1.,
-                                       simplekml.Color.blue, zone, letter)
+        #        self.imu.add_KML_path(kml, topic + '-attitude',
+        #                               east_base, self.imu.attitude_path[topic][:, self.imu.PATH_Y],
+        #                               north_base, self.imu.attitude_path[topic][:, self.imu.PATH_X] * -1.,
+        #                               simplekml.Color.blue, zone, letter)
 
         kml.save(file_name)
 

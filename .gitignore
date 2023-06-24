@@ -1,2 +1,6 @@
 *.pyc
 /.idea
+.idea
+.vscode
+/scripts/.idea
+/scripts/.vscode

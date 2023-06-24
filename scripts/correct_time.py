@@ -26,7 +26,6 @@ gate_name = "gate_south-end_north-end_"
 
 # first, find a list of the prefixes that have time correction data
 sync_files = glob.glob(file_set)
-#print(sync_files)
 
 messages_to_resync_blindly = ['ibeo/objects', 'ibeo/odometry']
 
@@ -65,7 +64,7 @@ for file in sync_files:
                     offset_duration = rospy.Duration(total_time_offset)
 
                     bag = rosbag.Bag(file_prefix + ".bag")
-                    #for topic, msg, t in bag.read_messages(topics=['chatter', 'numbers']):
+
                     for topic, msg, t in bag.read_messages():
                         
                         if topic == "tf" or topic == "/tf":
