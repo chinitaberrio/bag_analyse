@@ -2,5 +2,5 @@
 /.idea
 .idea
 .vscode
-/scripts/.idea
-/scripts/.vscode
+scripts/.idea
+scripts/.vscode

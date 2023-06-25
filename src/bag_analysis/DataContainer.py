@@ -114,18 +114,5 @@ class DataContainer:
                                         0, self.gnss.data[topic][:, self.gnss.NORTHING],
                                         simplekml.Color.red, zone, letter)
 
-        #for topic in self.imu.topic_list:
-        #    if len(self.imu.data[topic]) > 0:
-        #        print('KML item on imu list ' + str(topic))
-        #        self.imu.add_KML_path(kml, topic + '-gyro',
-        #                               east_base, self.imu.gyro_path[topic][:, self.imu.PATH_Y],
-        #                               north_base, self.imu.gyro_path[topic][:, self.imu.PATH_X] * -1.,
-        #                               simplekml.Color.yellow, zone, letter)
-
-        #        self.imu.add_KML_path(kml, topic + '-attitude',
-        #                               east_base, self.imu.attitude_path[topic][:, self.imu.PATH_Y],
-        #                               north_base, self.imu.attitude_path[topic][:, self.imu.PATH_X] * -1.,
-        #                               simplekml.Color.blue, zone, letter)
-
         kml.save(file_name)
 
