@@ -1,6 +1,5 @@
 *.pyc
-/.idea
-.idea
-.vscode
-scripts/.idea
-scripts/.vscode
+.idea/*
+.vscode/*
+scripts/.idea/*
+scripts/.vscode/*
