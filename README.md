@@ -1,4 +1,4 @@
-# ROS bag analysis scripts
+# ROS bag analysis scripts (TfNSW dataset)
 
 Within this project, there are scripts designed to retrieve data from the rosbag specifically related to positioning. These scripts generate graphical representations of the vehicle's position and trajectory based on the collected sensor data. 
 
